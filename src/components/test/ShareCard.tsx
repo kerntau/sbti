@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { getProfileDisplayName } from '@/lib/profile';
+import { useEffect, useState } from 'react';
 import { TestResult } from '@/types';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 interface ShareCardProps {
   result: TestResult;
@@ -11,208 +11,77 @@ interface ShareCardProps {
 }
 
 export default function ShareCard({ result, onDownload }: ShareCardProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [downloaded, setDownloaded] = useState(false);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let active = true;
+    // 延迟以确保 ResultCard 和 Recharts 都已经完全渲染并进行动画
+    const timer = setTimeout(() => {
+      const node = document.getElementById('result-report-card');
+      if (node) {
+        html2canvas(node, {
+          scale: 2, // 视网膜高清度
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#e8e6e1', // matched with bg-page
+        })
+          .then((canvas) => {
+            setDataUrl(canvas.toDataURL('image/png'));
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error('Failed to generate image:', err);
+            setLoading(false);
+          });
+      }
+    }, 800); // 放宽时间以包含 Recharts 的初始进场动画时长 (0.5-0.8s)
 
-    async function render() {
-      if (!canvasRef.current) return;
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      drawCard(ctx, canvas, result);
-    }
-
-    render();
-
-    return () => {
-      active = false;
-    };
+    return () => clearTimeout(timer);
   }, [result]);
 
   function handleDownload() {
-    if (!canvasRef.current) return;
+    if (!dataUrl) return;
     const link = document.createElement('a');
-    link.download = `SBTI-Report-${result.type}.png`;
-    link.href = canvasRef.current.toDataURL('image/png');
+    link.download = `IMSB-${result.finalType.code}.png`;
+    link.href = dataUrl;
     link.click();
-    setDownloaded(true);
     onDownload?.();
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <canvas
-        ref={canvasRef}
-        width={1080}
-        height={1400}
-        className="w-full max-w-sm rounded bg-white shadow-sm border border-[var(--border-light)]"
-      />
+    <div className="flex flex-col items-center gap-6 py-4">
+      {loading ? (
+        <div className="w-full aspect-[1/1.4] bg-gray-100 flex flex-col items-center justify-center text-gray-500 rounded-md border border-gray-200 shadow-sm gap-3">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span className="text-sm">正在生成高清报表...</span>
+        </div>
+      ) : (
+        <div className="w-full flex justify-center">
+          {dataUrl && (
+            <img 
+              src={dataUrl} 
+              alt="Test Result Report" 
+              className="max-w-full rounded-md shadow max-h-[85vh] object-contain border border-gray-200"
+            />
+          )}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={handleDownload}
-        className={`flex items-center gap-2 rounded-md px-6 py-3 text-xs font-semibold transition-all ${
-          downloaded
-            ? 'bg-[var(--border-light)] text-[var(--text-muted)] cursor-default'
-            : 'bg-[var(--text-primary)] text-white hover:opacity-85'
-        }`}
+        disabled={loading}
+        className="flex items-center gap-2 rounded-md px-8 py-3 text-sm font-bold transition-all disabled:opacity-50 bg-black text-white hover:bg-gray-800"
       >
         <Download className="w-4 h-4" />
-        {downloaded ? '已保存' : '保存报告图片'}
+        保存到相册 / 本地
       </button>
+      <p className="text-xs text-gray-400 mt-[-10px]">移动端可直接长按上方图片保存</p>
     </div>
   );
 }
 
-function drawCard(
-  ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement,
-  result: TestResult,
-) {
-  const W = canvas.width;
-  const H = canvas.height;
-  const displayName = getProfileDisplayName(result.profile);
-  const dateStr = new Date(result.completedAt).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-  const PAD = 100;
-
-  ctx.clearRect(0, 0, W, H);
-
-  // White background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, W, H);
-
-  // Outer border
-  ctx.strokeStyle = '#1a1a1a';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(PAD / 2, PAD / 2, W - PAD, H - PAD);
-
-  // ─── Header ───
-  let y = 110;
-  ctx.fillStyle = '#1a1a1a';
-  ctx.font = '700 30px "Inter", system-ui, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('SBTI', PAD, y);
-
-  ctx.fillStyle = '#999';
-  ctx.font = '400 20px "Inter", system-ui, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText(dateStr, W - PAD, y);
-
-  // Header rule
-  y += 24;
-  ctx.beginPath();
-  ctx.moveTo(PAD, y);
-  ctx.lineTo(W - PAD, y);
-  ctx.strokeStyle = '#1a1a1a';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // ─── Title ───
-  y += 72;
-  ctx.fillStyle = '#1a1a1a';
-  ctx.font = '700 38px "Inter", system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('认知偏好评估报告', W / 2, y);
-
-  // Subject info
-  y += 48;
-  ctx.fillStyle = '#888';
-  ctx.font = '400 22px "Inter", system-ui, sans-serif';
-  ctx.fillText(`受测者: ${displayName}　　置信度: ${Math.round(result.confidence * 100)}%`, W / 2, y);
-
-  // Divider
-  y += 40;
-  drawRule(ctx, PAD, W - PAD, y, '#d0d0cc');
-
-  // ─── Type Block ───
-  y += 100;
-  ctx.fillStyle = '#1a1a1a';
-  ctx.font = '800 140px "Inter", system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(result.type, W / 2, y);
-
-  y += 56;
-  ctx.fillStyle = '#555';
-  ctx.font = '500 36px "Inter", system-ui, sans-serif';
-  ctx.fillText(`${result.personality.name} · ${result.personality.slang}`, W / 2, y);
-
-  y += 48;
-  ctx.fillStyle = '#999';
-  ctx.font = '400 24px "Inter", system-ui, sans-serif';
-  ctx.fillText(`「${result.personality.tagline}」`, W / 2, y);
-
-  // Divider
-  y += 56;
-  drawRule(ctx, PAD, W - PAD, y, '#d0d0cc');
-
-  // ─── Axis Section ───
-  y += 48;
-  ctx.fillStyle = '#1a1a1a';
-  ctx.font = '700 22px "Inter", system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('§2　维度分析', W / 2, y);
-
-  y += 50;
-
-  const barW = 700;
-  const barX = W / 2 - barW / 2;
-
-  result.axisBreakdown.forEach((axis) => {
-    // Axis label
-    ctx.fillStyle = '#999';
-    ctx.font = '500 18px "Inter", system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(axis.label, W / 2, y);
-
-    const labelY = y + 32;
-
-    // Left label
-    ctx.textAlign = 'left';
-    ctx.fillStyle = axis.percentA >= axis.percentB ? '#1a1a1a' : '#999';
-    ctx.font = `${axis.percentA >= axis.percentB ? '700' : '400'} 20px "Inter", system-ui, sans-serif`;
-    ctx.fillText(`${axis.labelA} ${axis.percentA}%`, barX, labelY);
-
-    // Right label
-    ctx.textAlign = 'right';
-    ctx.fillStyle = axis.percentB > axis.percentA ? '#1a1a1a' : '#999';
-    ctx.font = `${axis.percentB > axis.percentA ? '700' : '400'} 20px "Inter", system-ui, sans-serif`;
-    ctx.fillText(`${axis.labelB} ${axis.percentB}%`, barX + barW, labelY);
-
-    // Bar bg
-    const barY = labelY + 16;
-    ctx.fillStyle = '#e8e6e1';
-    ctx.fillRect(barX, barY, barW, 8);
-
-    // Bar fill
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(barX, barY, (barW * axis.percentA) / 100, 8);
-
-    y += 90;
-  });
-
-  // ─── Footer ───
-  const footerY = H - PAD / 2 - 24;
-  drawRule(ctx, PAD, W - PAD, footerY - 30, '#1a1a1a');
-
-  ctx.fillStyle = '#b0b0b0';
-  ctx.font = '400 18px "Inter", system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('SBTI 认知偏好评估系统 · 数据仅存于本地', W / 2, footerY);
-}
-
-function drawRule(
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  x2: number,
-  y: number,
-  color: string,
-) {
+function drawRule(ctx: CanvasRenderingContext2D, x1: number, x2: number, y: number, color: string) {
   ctx.beginPath();
   ctx.moveTo(x1, y);
   ctx.lineTo(x2, y);
