@@ -31,80 +31,99 @@ export default function QuestionCard({
       key={question.id}
       custom={direction}
       variants={{
-        enter: (value: number) => ({ x: value > 0 ? 40 : -40, opacity: 0 }),
+        enter: (value: number) => ({ scale: 0.95, opacity: 0, filter: 'blur(10px)' }),
         center: {
-          x: 0,
+          scale: 1,
           opacity: 1,
-          transition: { type: 'spring' as const, stiffness: 300, damping: 30 },
+          filter: 'blur(0px)',
+          transition: { type: 'spring' as const, stiffness: 200, damping: 25 },
         },
         exit: (value: number) => ({
-          x: value < 0 ? 40 : -40,
+          scale: 1.05,
           opacity: 0,
+          filter: 'blur(10px)',
           transition: { duration: 0.2 },
         }),
       }}
       initial="enter"
       animate="center"
       exit="exit"
-      className="mx-auto w-full max-w-3xl px-4"
+      className="mx-auto w-full max-w-3xl px-4 flex justify-center perspective-1000"
     >
-      <div className="glass-card-strong overflow-hidden rounded-[2rem]">
-        <div className="flex flex-wrap items-center justify-between border-b border-slate-100/70 bg-slate-50/55 px-6 py-4 md:px-8">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+      <div className="tarot-card w-full p-2 md:p-3 relative group">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(206,170,123,0.02)_0%,transparent_70%)] pointer-events-none" />
+
+        <div className="relative z-10 flex flex-wrap items-center justify-between border-b border-[var(--line-gold)] border-opacity-30 pb-4 mb-8 pt-4 px-6 md:px-8">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center justify-center gap-2 text-[10px] tracking-[0.3em] font-serif text-[var(--text-gold)] uppercase">
+              <span className="opacity-50 text-[8px]">✧</span>
               {axisLabel}
+              <span className="opacity-50 text-[8px]">✧</span>
             </span>
-            <span className="text-sm font-medium text-slate-500">{axisHint}</span>
+            <span className="text-[10px] uppercase font-light tracking-widest text-[var(--text-muted)] opacity-60 hidden md:inline-block">
+              {axisHint}
+            </span>
           </div>
-          <span className="text-sm font-bold text-slate-400">
-            {questionNumber} <span className="font-medium text-slate-300">/ {total}</span>
+          <span className="text-[10px] font-serif text-[var(--text-muted)] tracking-[0.2em]">
+            <span className="text-[var(--text-gold)]">{questionNumber}</span> / {total}
           </span>
         </div>
 
-        <div className="px-6 py-10 md:px-10 md:py-12">
-          <h2 className="text-2xl font-bold leading-snug text-slate-900 md:text-3xl">
+        <div className="px-6 pb-10 md:px-10 md:pb-14 relative z-10">
+          <h2 className="text-xl md:text-2xl font-serif leading-relaxed text-[var(--text-main)] tracking-wide min-h-[4rem]">
             {question.text}
           </h2>
 
-          <div className="mt-8 flex flex-col gap-4">
+          <div className="mt-12 flex flex-col gap-6">
             {question.options.map((option) => {
               const active = selectedKey === option.key;
 
               return (
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
                   key={option.key}
                   type="button"
                   disabled={isLocked}
                   onClick={() => onSelect(option.key)}
-                  className={`group relative flex w-full items-center gap-5 rounded-2xl p-5 text-left transition-all duration-300 focus-visible:outline-none disabled:cursor-wait ${
+                  className={`group relative flex w-full items-center gap-5 p-5 text-left transition-all duration-500 focus-visible:outline-none disabled:cursor-wait overflow-hidden ${
                     active
-                      ? 'bg-blue-50/80 shadow-[0_0_0_1px_#3b82f6,0_16px_40px_-22px_rgba(59,130,246,0.45)]'
-                      : 'border border-white/80 bg-white/80 hover:border-blue-200 hover:bg-slate-50 hover:shadow-sm'
+                      ? 'bg-black/60 shadow-[inset_0_0_15px_rgba(206,170,123,0.15)] border-y border-[var(--line-gold-strong)]'
+                      : 'bg-black/20 border-y border-transparent hover:bg-black/40 hover:border-[var(--line-gold)] hover:border-opacity-30'
                   }`}
                   aria-pressed={active}
                 >
                   <div
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors duration-300 ${
-                      active ? 'border-blue-600 bg-blue-600' : 'border-slate-300 group-hover:border-blue-400'
+                    className={`flex h-4 w-4 shrink-0 transform rotate-45 items-center justify-center border transition-all duration-500 ${
+                      active ? 'border-[var(--text-gold)] bg-[var(--text-gold)] shadow-[0_0_10px_rgba(206,170,123,0.5)]' : 'border-[var(--line-gold)] opacity-50 group-hover:opacity-100 group-hover:border-[var(--text-gold)]'
                     }`}
                   >
                     {active && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="h-2 w-2 rounded-full bg-white"
+                        className="h-1 w-1 bg-black"
                       />
                     )}
                   </div>
 
                   <span
-                    className={`flex-1 text-base font-medium md:text-lg ${
-                      active ? 'text-blue-900' : 'text-slate-700 group-hover:text-slate-900'
+                    className={`flex-1 text-sm tracking-wide md:text-base font-light transition-colors duration-500 ${
+                      active ? 'text-[var(--text-main)] drop-shadow-[0_0_5px_rgba(206,170,123,0.5)]' : 'text-[var(--text-muted)] group-hover:text-[var(--text-main)]'
                     }`}
                   >
                     {option.label}
                   </span>
-                </button>
+
+                  {active && (
+                    <motion.div 
+                      layoutId="activeGlow"
+                      className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(206,170,123,0.05),transparent)] z-[-1]"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  )}
+                </motion.button>
               );
             })}
           </div>

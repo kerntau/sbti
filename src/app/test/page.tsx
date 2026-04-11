@@ -60,9 +60,9 @@ function TestContent() {
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(100%_100%_at_50%_0%,rgba(219,234,254,0.6)_0%,rgba(248,250,252,1)_100%)]">
-        <div className="glass-card rounded-full px-5 py-3 text-sm font-semibold text-slate-700">
-          正在进入测试...
+      <div className="flex min-h-screen items-center justify-center star-grid relative bg-[#050508]">
+        <div className="tarot-card rounded-sm px-5 py-3 text-xs font-serif text-[var(--text-gold)] tracking-widest uppercase">
+          ✧ 占星阵列展开中 ✧
         </div>
       </div>
     );
@@ -94,7 +94,7 @@ function TestContent() {
         next();
         syncIndex(activeSession.currentIndex + 1);
         setTransitionLocked(false);
-      }, 120);
+      }, 400); // 增加延迟等待完美动画
       return;
     }
 
@@ -103,7 +103,7 @@ function TestContent() {
       const result = calculateResult(nextAnswers);
       completeSession(result);
       router.push('/result');
-    }, 180);
+    }, 450);
   }
 
   function handlePrev() {
@@ -124,48 +124,52 @@ function TestContent() {
 
   if (isComplete) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(100%_100%_at_50%_0%,rgba(219,234,254,0.6)_0%,rgba(248,250,252,1)_100%)]">
-        <div className="glass-card rounded-[2rem] px-8 py-7 text-center">
-          <div className="mx-auto h-12 w-12 animate-pulse rounded-full bg-blue-500/20" />
-          <p className="mt-4 text-lg font-semibold text-slate-800">正在整理你的结果...</p>
-          <p className="mt-1 text-sm text-slate-500">马上就好</p>
+      <div className="flex min-h-screen items-center justify-center star-grid relative bg-[#050508]">
+        <div className="tarot-card rounded-sm px-10 py-10 text-center flex flex-col items-center">
+          <div className="h-10 w-10 border border-[var(--line-gold)] transform rotate-45 flex items-center justify-center mb-6 animate-pulse shadow-[0_0_20px_rgba(206,170,123,0.3)]">
+            <span className="text-xl text-[var(--text-gold)] transform -rotate-45 block">✦</span>
+          </div>
+          <p className="mt-4 text-base font-serif tracking-widest text-[var(--text-main)]">正在铭刻本命印记...</p>
+          <p className="mt-2 text-[10px] tracking-[0.3em] text-[var(--text-muted)] uppercase">Destiny awaits</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[radial-gradient(100%_100%_at_50%_0%,rgba(219,234,254,0.7)_0%,rgba(248,250,252,1)_55%)]">
-      <div className="pointer-events-none absolute inset-0 soft-grid opacity-40" />
-      <header className="sticky top-0 z-20 border-b border-white/50 bg-white/50 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
+    <main className="min-h-screen overflow-hidden star-grid relative">
+      <header className="sticky top-0 z-20 border-b border-[var(--line-gold)] border-opacity-20 bg-black/40 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 md:px-8">
           <button
             type="button"
             onClick={() => router.push('/')}
-            className="glass-card inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
+            className="ghost-btn px-4 py-2 text-[10px]"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            返回首页
+             返回界外
           </button>
           <div className="text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">SBTI Test</p>
-            <p className="text-sm text-slate-600">按第一反应作答，结果会更接近你</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[var(--text-gold)]">The Tarot Matrix</p>
+            <p className="text-[10px] text-[var(--text-muted)] tracking-widest mt-1 opacity-70">随心所引，皆定数</p>
           </div>
         </div>
       </header>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-12 pt-8">
+      <div className="relative mx-auto max-w-5xl px-4 md:px-8 pb-12 pt-8">
         <ProgressBar current={activeSession.currentIndex} total={TOTAL} answered={answeredCount} />
 
-        <div className="glass-card mt-6 rounded-[1.75rem] px-5 py-4 md:px-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="tarot-card mt-10 p-5 md:p-6 mb-10 overflow-visible">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-700">每次进入都会开启新的测试</p>
-              <p className="mt-1 text-sm text-slate-500">可以回看已答题，也可以继续下一题，但不会继承上一次访客的答题进度。</p>
+              <p className="text-xs tracking-widest text-[var(--text-gold)] font-light flex items-center gap-2">
+                <span className="opacity-50 text-[10px]">✧</span> 
+                命运之轴无法篡改
+                <span className="opacity-50 text-[10px]">✧</span>
+              </p>
+              <p className="mt-2 text-[10px] tracking-[0.2em] text-[var(--text-muted)] uppercase opacity-80 leading-relaxed max-w-sm">
+                可随此星轨回溯时间线，但前尘往事不得重写。
+              </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
               {questions.map((question, index) => {
                 const answered = answeredIds.has(question.id);
                 const current = index === activeSession.currentIndex;
@@ -176,16 +180,16 @@ function TestContent() {
                     type="button"
                     onClick={() => handleDotClick(index)}
                     disabled={index > lastReachableIndex}
-                    className={`h-2.5 rounded-full transition-all duration-200 ${
+                    className={`h-[2px] transition-all duration-300 rounded-none ${
                       current
-                        ? 'w-8 bg-blue-600'
+                        ? 'w-6 bg-[var(--text-gold)] shadow-[0_0_10px_rgba(206,170,123,0.8)]'
                         : answered
-                          ? 'w-2.5 bg-blue-200 hover:bg-blue-300'
+                          ? 'w-3 bg-[var(--line-gold)] hover:bg-[var(--line-gold-strong)]'
                           : index <= lastReachableIndex
-                            ? 'w-2.5 bg-slate-300 hover:bg-slate-400'
-                            : 'w-2.5 bg-slate-200 opacity-50'
+                            ? 'w-2 bg-[var(--text-muted)] opacity-50 hover:opacity-100'
+                            : 'w-2 bg-gray-800 opacity-40'
                     }`}
-                    aria-label={`跳转到第 ${index + 1} 题`}
+                    aria-label={`溯回至第 ${index + 1} 刻度`}
                   />
                 );
               })}
@@ -193,15 +197,15 @@ function TestContent() {
           </div>
         </div>
 
-        <div className="mt-8 min-h-[520px]">
+        <div className="mt-4 min-h-[520px]">
           <AnimatePresence mode="wait" custom={direction}>
             <QuestionCard
               key={currentQuestion.id}
               question={currentQuestion}
               questionNumber={activeSession.currentIndex + 1}
               total={TOTAL}
-              axisLabel={axisMeta?.label ?? '人格维度'}
-              axisHint={axisMeta ? `${axisMeta.labelA} vs ${axisMeta.labelB}` : '双向选择'}
+              axisLabel={axisMeta?.label ?? '界域维界'}
+              axisHint={axisMeta ? `${axisMeta.labelA} vs ${axisMeta.labelB}` : '双界抉择'}
               selectedKey={selectedKey}
               isLocked={transitionLocked}
               onSelect={handleSelect}
@@ -210,25 +214,22 @@ function TestContent() {
           </AnimatePresence>
         </div>
 
-        <footer className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <footer className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--line-gold)] border-opacity-20 pt-6">
           <button
             type="button"
             onClick={handlePrev}
             disabled={isFirst}
-            className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all ${
+            className={`ghost-btn px-6 py-2.5 text-[10px] transition-opacity ${
               isFirst
-                ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                : 'glass-card text-slate-700 hover:-translate-y-0.5'
+                ? 'opacity-30 cursor-not-allowed border-gray-800 text-gray-500 hover:border-gray-800 hover:box-shadow-none pointer-events-none'
+                : ''
             }`}
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            上一题
+             溯回时间
           </button>
 
-          <div className="glass-card rounded-full px-5 py-3 text-sm font-semibold text-slate-600">
-            已完成 {answeredCount} / {TOTAL}
+          <div className="text-[10px] tracking-[0.3em] uppercase text-[var(--text-muted)] font-serif">
+            印记 {answeredCount} / {TOTAL}
           </div>
         </footer>
       </div>
@@ -240,8 +241,8 @@ export default function TestPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(100%_100%_at_50%_0%,rgba(219,234,254,0.6)_0%,rgba(248,250,252,1)_100%)] text-slate-600">
-          加载中...
+        <div className="flex min-h-screen items-center justify-center star-grid bg-[#050508] relative text-[var(--text-muted)] tracking-widest text-sm uppercase">
+          ✧ 凝听星轨的呼唤 ✧
         </div>
       }
     >

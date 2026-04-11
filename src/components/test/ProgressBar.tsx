@@ -12,28 +12,39 @@ export default function ProgressBar({ current, total, answered }: ProgressBarPro
   const progress = Math.min(100, Math.max(0, (answered / total) * 100));
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4">
-      <div className="mb-3 flex items-center justify-between gap-4">
+    <div className="mx-auto w-full max-w-3xl px-4 mt-4">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-slate-700">
-            当前进度 {answered}/{total}
-          </p>
-          <p className="text-sm text-slate-500">
-            正在回答第 {current + 1} 题，答题记录会自动保存。
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            命运刻度 {answered}/{total}
           </p>
         </div>
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-600">
+        <span className="font-serif text-[10px] text-[var(--text-gold)] tracking-widest flex items-center justify-center relative">
           {Math.round(progress)}%
         </span>
       </div>
 
-      <div className="h-3 overflow-hidden rounded-full bg-white/70 ring-1 ring-slate-200/70 backdrop-blur-sm">
+      <div className="relative h-[1px] w-full bg-[var(--line-gold)] opacity-30 shadow-[0_0_5px_rgba(206,170,123,0.1)]">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400"
+          className="absolute left-0 top-0 h-full bg-[var(--text-gold)] shadow-[0_0_10px_rgba(206,170,123,0.5)]"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
-          transition={{ type: 'spring' as const, stiffness: 120, damping: 22 }}
+          transition={{ type: 'spring' as const, stiffness: 60, damping: 20 }}
         />
+        <motion.div
+          className="absolute top-1/2 -ml-2.5 -mt-2.5 flex h-5 w-5 items-center justify-center text-[var(--text-gold)]"
+          initial={{ left: 0 }}
+          animate={{ left: `${progress}%` }}
+          transition={{ type: 'spring' as const, stiffness: 60, damping: 20 }}
+        >
+          <motion.span
+            animate={{ rotate: 360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+            className="text-xs filter drop-shadow-[0_0_5px_rgba(206,170,123,0.8)]"
+          >
+            ✦
+          </motion.span>
+        </motion.div>
       </div>
     </div>
   );
