@@ -38,9 +38,9 @@ export default function ResultPage() {
 
   if (!result) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(100%_100%_at_50%_0%,rgba(219,234,254,0.6)_0%,rgba(248,250,252,1)_100%)]">
-        <div className="glass-card rounded-full px-5 py-3 text-sm font-semibold text-slate-700">
-          正在整理你的结果页...
+      <div className="flex min-h-screen items-center justify-center star-grid relative bg-[#050508]">
+        <div className="tarot-card rounded-[2rem] px-8 py-7 text-center">
+          <p className="mt-4 text-xs font-serif text-[var(--text-gold)] tracking-widest uppercase">星轨解析中...</p>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ export default function ResultPage() {
     const url = buildShareUrl();
     const displayName = getProfileDisplayName(result.profile);
     const sharePayload = {
-      title: `${displayName} 的 SBTI 结果：${result.type} ${result.name}`,
+      title: `${displayName} 的本命牌：${result.type} ${result.name}`,
       text: `${displayName} 测出了 ${result.type} ${result.name}「${result.slang}」`,
       url,
     };
@@ -84,119 +84,110 @@ export default function ResultPage() {
   }
 
   const shareLabel = {
-    idle: '分享结果链接',
-    copied: '链接已复制',
-    shared: '已调起分享',
-    error: '分享失败，请重试',
+    idle: '流传本命星轨 (URL)',
+    copied: '星轨印记已复制',
+    shared: '已调起星轨流传',
+    error: '界域扰动，复制失败',
   }[shareStatus];
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef5ff_100%)] pb-16">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/86 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+    <main className="min-h-screen star-grid bg-[#050508] pb-24 relative overflow-hidden">
+      <div className="pointer-events-none absolute -left-32 top-16 h-96 w-96 rounded-full bg-[rgba(206,170,123,0.06)] blur-[100px]" />
+      
+      <header className="sticky top-0 z-20 border-b border-[var(--line-gold)] border-opacity-20 bg-black/40 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 md:px-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900"
+            className="ghost-btn px-4 py-2 text-[10px]"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            返回首页
+            返回现世
           </Link>
           <div className="text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Result Ready</p>
-            <p className="text-sm text-slate-600">{getProfileDisplayName(result.profile)} 的结果已保存到本机历史记录</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[var(--text-gold)]">Destiny Revealed</p>
+            <p className="text-[10px] text-[var(--text-muted)] tracking-widest mt-1 opacity-70 border-b border-[var(--line-gold)] border-opacity-30 inline-block pb-0.5">
+              已将印记烙印于本机界域
+            </p>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 pt-8">
+      <div className="mx-auto max-w-6xl px-4 pt-8 md:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
+          initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
         >
           <ResultCard result={result} />
         </motion.div>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.92fr]">
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] md:p-8">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+        <section className="mt-10 grid gap-6 lg:grid-cols-[1.5fr_1fr] relative z-20">
+          <div className="tarot-card p-6 md:p-10 flex flex-col justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-6">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">分享与扩散</p>
-                <h2 className="mt-2 text-2xl font-black text-slate-900">把结果发给朋友看看</h2>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 md:text-base">
-                  你可以直接分享链接，也可以展开分享卡并保存图片。分享链接会带上你的四维百分比结果，不只是一个类型名。
+                <p className="text-[10px] uppercase font-serif tracking-[0.3em] text-[var(--text-gold)] flex items-center gap-2 opacity-80">
+                  <span className="opacity-50 text-[10px]">✧</span> 扩散印记 <span className="opacity-50 text-[10px]">✧</span>
+                </p>
+                <h2 className="mt-4 text-2xl font-serif text-[var(--text-main)] tracking-widest">让世界见证你的本命牌</h2>
+                <p className="mt-3 max-w-xl text-xs leading-relaxed tracking-wider text-[var(--text-muted)] font-light">
+                  提取赛博护身符，或通过界域链路邀请他人共赴星盘。分享卡包含深邃的星轨维度。
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4 sm:mt-0">
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800"
+                  className="ghost-btn px-6 py-3.5 text-[10px] drop-shadow-[0_0_10px_rgba(206,170,123,0.3)] w-full sm:w-auto"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
                   {shareLabel}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowShareCard((value) => !value)}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-all duration-200 hover:-translate-y-0.5"
+                  className="border border-[var(--text-muted)] border-opacity-30 bg-black/40 text-[var(--text-muted)] px-6 py-3.5 text-[10px] tracking-widest uppercase transition-all hover:border-[var(--line-gold)] hover:text-[var(--text-gold)] w-full sm:w-auto"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-10h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {showShareCard ? '收起分享卡' : '展开分享卡'}
+                  {showShareCard ? '收起护身符' : '展现护身符 ✦'}
                 </button>
               </div>
             </div>
 
             {showShareCard && (
-              <div className="mt-8 border-t border-slate-200 pt-8">
+              <div className="mt-10 border-t border-[var(--line-gold)] border-opacity-30 pt-10">
                 <ShareCard result={result} />
               </div>
             )}
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-[0_24px_64px_rgba(15,23,42,0.08)] md:p-5">
-            <Image
-              src="/illustrations/personality-grid.svg"
-              alt="SBTI 维度说明示意图"
-              width={1200}
-              height={800}
-              sizes="(max-width: 1024px) 100vw, 36vw"
-              className="h-auto w-full rounded-[24px]"
-            />
-            <div className="mt-5 rounded-[24px] bg-slate-50 px-5 py-5 ring-1 ring-slate-100">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">重新测试</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                如果你刚才是边想边选，或者想换个心情再测一次，可以重新开始一轮。历史结果会继续保留，方便你对比。
-              </p>
-              <button
-                type="button"
-                onClick={handleRetest}
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-600"
-              >
-                再测一次
-              </button>
-            </div>
+          <div className="tarot-card p-6 md:p-8 flex flex-col justify-center">
+            <p className="text-[10px] font-serif uppercase tracking-[0.3em] text-[var(--text-muted)] mb-4 flex items-center gap-2">
+               <span className="opacity-50 text-[10px]">✧</span> 重塑命轨
+            </p>
+            <p className="mt-2 text-xs leading-loose text-[var(--text-main)] font-light tracking-wide opacity-80">
+              若这副本命牌未能完全映射你的灵魂，你可以逆转时间沙漏，再次叩问本心。所有历史揭晓的牌面都将被珍藏。
+            </p>
+            <button
+              type="button"
+              onClick={handleRetest}
+              className="mt-8 ghost-btn px-6 py-3 text-[10px] border-[var(--text-muted)] text-[var(--text-muted)] hover:border-[var(--line-gold)] self-start"
+            >
+              再次叩问
+            </button>
           </div>
         </section>
 
         {history.length > 1 && (
-          <section className="mt-8 rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] md:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">最近几次结果</p>
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <section className="mt-8 tarot-card p-6 md:p-8 relative z-20">
+            <p className="text-[10px] font-serif uppercase tracking-[0.3em] text-[var(--text-gold)] mb-6 flex items-center gap-2 opacity-80">
+              <span className="opacity-50 text-[10px]">✧</span> 历史印记
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
               {history.slice(1).map((item) => (
-                <div key={item.completedAt} className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
+                <div key={item.completedAt} className="border border-[var(--line-gold)] border-opacity-30 bg-black/40 px-5 py-4 transition-all hover:bg-black/60 hover:border-opacity-60">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-xl font-black text-slate-900">{item.type}</p>
-                      <p className="text-sm text-slate-500">{item.name} · 「{item.slang}」</p>
+                      <p className="text-xl font-serif text-[var(--text-gold)] tracking-widest">{item.type}</p>
+                      <p className="text-[10px] tracking-widest text-[var(--text-muted)] mt-1 uppercase">{item.name} · 「{item.slang}」</p>
                     </div>
-                    <span className="text-xs font-semibold text-slate-400">
+                    <span className="text-[10px] font-light tracking-widest text-[var(--text-muted)] opacity-60">
                       {new Date(item.completedAt).toLocaleDateString('zh-CN')}
                     </span>
                   </div>

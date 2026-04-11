@@ -43,7 +43,7 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
     }
 
     const link = document.createElement('a');
-    link.download = `SBTI-${result.type}.png`;
+    link.download = `SBTI-Tarot-${result.type}.png`;
     link.href = canvasRef.current.toDataURL('image/png');
     link.click();
     setDownloaded(true);
@@ -56,21 +56,18 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
         ref={canvasRef}
         width={1080}
         height={1350}
-        className="w-full max-w-sm rounded-[28px] shadow-[0_32px_80px_rgba(15,23,42,0.18)]"
+        className="w-full max-w-sm rounded-[2px] shadow-[0_0_30px_rgba(206,170,123,0.15)] border border-[var(--line-gold)] border-opacity-30"
       />
       <button
         type="button"
         onClick={handleDownload}
-        className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-all duration-200 ${
+        className={`ghost-btn px-6 py-3 text-[10px] uppercase font-serif tracking-widest mt-4 ${
           downloaded
-            ? 'bg-emerald-500 text-white'
-            : 'bg-slate-950 text-white hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.18)]'
+            ? 'opacity-50 text-[var(--text-muted)] border-[var(--text-muted)]'
+            : ''
         }`}
       >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        {downloaded ? '分享卡已保存' : '保存分享卡'}
+        {downloaded ? '护身符已被铭刻' : '凝结赛博护身符 ✦'}
       </button>
     </div>
   );
@@ -84,116 +81,117 @@ async function drawCard(
 ) {
   const width = canvas.width;
   const height = canvas.height;
-  const accent = result.personality.color.includes('gradient') ? '#3B82F6' : result.personality.color;
   const displayName = getProfileDisplayName(result.profile);
 
   ctx.clearRect(0, 0, width, height);
 
+  // Background
   const background = ctx.createLinearGradient(0, 0, width, height);
-  background.addColorStop(0, '#F8FBFF');
-  background.addColorStop(0.55, '#F2F7FF');
-  background.addColorStop(1, '#EEF2FF');
+  background.addColorStop(0, '#0a0c10');
+  background.addColorStop(0.5, '#050508');
+  background.addColorStop(1, '#020203');
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, width, height);
 
-  const glowA = ctx.createRadialGradient(160, 180, 20, 160, 180, 280);
-  glowA.addColorStop(0, 'rgba(59,130,246,0.18)');
-  glowA.addColorStop(1, 'rgba(59,130,246,0)');
+  // Gold Glows
+  const glowA = ctx.createRadialGradient(160, 180, 20, 160, 180, 400);
+  glowA.addColorStop(0, 'rgba(206,170,123,0.15)');
+  glowA.addColorStop(1, 'rgba(206,170,123,0)');
   ctx.fillStyle = glowA;
   ctx.fillRect(0, 0, width, height);
 
-  const glowB = ctx.createRadialGradient(920, 1120, 50, 920, 1120, 360);
-  glowB.addColorStop(0, 'rgba(129,140,248,0.18)');
-  glowB.addColorStop(1, 'rgba(129,140,248,0)');
+  const glowB = ctx.createRadialGradient(920, 1120, 50, 920, 1120, 500);
+  glowB.addColorStop(0, 'rgba(206,170,123,0.1)');
+  glowB.addColorStop(1, 'rgba(206,170,123,0)');
   ctx.fillStyle = glowB;
   ctx.fillRect(0, 0, width, height);
 
-  roundRect(ctx, 60, 58, width - 120, height - 116, 42);
-  ctx.fillStyle = 'rgba(255,255,255,0.82)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+  // Inner border
+  ctx.strokeStyle = 'rgba(206,170,123,0.3)';
   ctx.lineWidth = 2;
-  ctx.stroke();
+  ctx.strokeRect(60, 60, width - 120, height - 120);
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '700 26px Arial';
-  ctx.textAlign = 'left';
-  ctx.fillText('SBTI PERSONALITY SNAPSHOT', 106, 118);
+  // Double border
+  ctx.strokeStyle = 'rgba(206,170,123,0.1)';
+  ctx.strokeRect(70, 70, width - 140, height - 140);
 
-  await drawProfileHeader(ctx, result, displayName, active);
+  // Top header text
+  ctx.fillStyle = '#8b92a5';
+  ctx.font = '300 22px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('✧ THE TAROT MATRIX ✧', width / 2, 120);
 
-  ctx.fillStyle = accent;
-  ctx.font = '900 138px Arial';
-  ctx.fillText(result.type, 104, 340);
+  // Draw Avatar
+  await drawProfileHeader(ctx, result, displayName, active, width);
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '700 52px Arial';
-  ctx.fillText(result.personality.name, 108, 412);
+  // Type Name
+  ctx.textAlign = 'center';
+  const typeGradient = ctx.createLinearGradient(0, 260, 0, 400);
+  typeGradient.addColorStop(0, '#f7e2c0');
+  typeGradient.addColorStop(0.5, '#ceaa7b');
+  typeGradient.addColorStop(1, '#8c6b41');
+  ctx.fillStyle = typeGradient;
+  ctx.font = '600 140px "Times New Roman", serif';
+  ctx.fillText(result.type, width / 2, 420);
 
-  ctx.fillStyle = '#475569';
-  ctx.font = '700 34px Arial';
-  ctx.fillText(`「${result.personality.slang}」`, 108, 460);
+  // Personality Title
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '400 52px "Times New Roman", serif';
+  ctx.fillText(result.personality.name, width / 2, 500);
 
-  ctx.fillStyle = '#64748B';
-  ctx.font = '30px Arial';
-  wrapText(ctx, result.personality.tagline, 108, 520, width - 216, 44);
+  // Slang
+  ctx.fillStyle = '#ceaa7b';
+  ctx.font = '300 32px "Times New Roman", serif';
+  ctx.fillText(`「${result.personality.slang}」`, width / 2, 560);
 
-  const metrics = [
-    `稳定度 ${Math.round(result.confidence * 100)}%`,
-    `时长 ${Math.max(1, Math.round(result.durationMs / 60000))} 分钟`,
-  ];
+  // Description
+  ctx.fillStyle = '#8b92a5';
+  ctx.font = '300 28px "Times New Roman", serif';
+  wrapTextCenter(ctx, result.personality.tagline, width / 2, 630, width - 200, 40);
 
-  metrics.forEach((item, index) => {
-    roundRect(ctx, 108 + index * 230, 610, 204, 58, 28);
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(226,232,240,1)';
-    ctx.stroke();
-    ctx.fillStyle = '#334155';
-    ctx.font = '700 22px Arial';
-    ctx.fillText(item, 132 + index * 230, 648);
-  });
+  // Axis
+  let top = 760;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ceaa7b';
+  ctx.font = '400 24px "Times New Roman", serif';
+  ctx.fillText('✦ 四维能量阵列 ✦', width / 2, 700);
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '700 22px Arial';
-  ctx.fillText('四维趋势', 108, 748);
-
-  let top = 790;
   result.axisBreakdown.forEach((axis) => {
-    drawAxisRow(ctx, {
+    drawAxisRowDark(ctx, {
       top,
+      width,
       label: axis.label,
       left: `${axis.labelA} ${axis.percentA}%`,
       right: `${axis.labelB} ${axis.percentB}%`,
       percentA: axis.percentA,
     });
-    top += 112;
+    top += 100;
   });
 
-  roundRect(ctx, 108, 1190, width - 216, 108, 30);
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(226,232,240,1)';
-  ctx.stroke();
+  // Footer summary
+  ctx.strokeStyle = 'rgba(206,170,123,0.2)';
+  ctx.strokeRect(100, 1180, width - 200, 100);
 
-  ctx.fillStyle = '#3B82F6';
-  ctx.font = '700 22px Arial';
-  ctx.fillText('一句总结', 134, 1230);
+  ctx.fillStyle = '#ceaa7b';
+  ctx.font = '400 22px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('✧ 宿命揭示 ✧', width / 2, 1220);
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '28px Arial';
-  wrapText(ctx, result.highlights[0], 134, 1270, width - 268, 36);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '300 26px "Times New Roman", serif';
+  ctx.fillText(result.highlights[0], width / 2, 1260);
 }
 
 async function drawProfileHeader(
   ctx: CanvasRenderingContext2D,
   result: TestResult,
   displayName: string,
-  active: boolean
+  active: boolean,
+  width: number
 ) {
-  const avatarX = 108;
-  const avatarY = 150;
-  const avatarSize = 96;
+  const avatarSize = 80;
+  const avatarX = width / 2 - avatarSize / 2;
+  const avatarY = 160;
 
   ctx.save();
   ctx.beginPath();
@@ -215,55 +213,63 @@ async function drawProfileHeader(
   }
 
   if (!drewAvatar) {
-    const fallback = ctx.createLinearGradient(avatarX, avatarY, avatarX + avatarSize, avatarY + avatarSize);
-    fallback.addColorStop(0, '#DBEAFE');
-    fallback.addColorStop(1, '#E0E7FF');
-    ctx.fillStyle = fallback;
+    ctx.fillStyle = '#0a0c10';
     ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
-    ctx.fillStyle = '#2563EB';
-    ctx.font = '700 34px Arial';
+    ctx.fillStyle = '#ceaa7b';
+    ctx.font = '400 30px "Times New Roman", serif';
     ctx.textAlign = 'center';
-    ctx.fillText(getProfileInitial(result.profile), avatarX + avatarSize / 2, avatarY + 58);
-    ctx.textAlign = 'left';
+    ctx.fillText(getProfileInitial(result.profile), avatarX + avatarSize / 2, avatarY + 48);
   }
   ctx.restore();
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#ceaa7b';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+  ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2 + 6, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '700 30px Arial';
-  ctx.fillText(displayName, 224, 192);
-
-  ctx.fillStyle = '#64748B';
-  ctx.font = '24px Arial';
-  ctx.fillText(result.profile?.qq ? `QQ ${result.profile.qq}` : '匿名分享卡', 224, 228);
+  ctx.fillStyle = '#ceaa7b';
+  ctx.font = '300 24px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(displayName, width / 2, avatarY + avatarSize + 40);
 }
 
-function drawAxisRow(
+function drawAxisRowDark(
   ctx: CanvasRenderingContext2D,
-  payload: { top: number; label: string; left: string; right: string; percentA: number }
+  payload: { top: number; width: number; label: string; left: string; right: string; percentA: number }
 ) {
-  ctx.fillStyle = '#64748B';
-  ctx.font = '700 20px Arial';
-  ctx.fillText(payload.label, 108, payload.top);
+  const barWidth = 700;
+  const barX = payload.width / 2 - barWidth / 2;
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '700 24px Arial';
-  ctx.fillText(payload.left, 108, payload.top + 34);
-  ctx.textAlign = 'right';
-  ctx.fillText(payload.right, 972, payload.top + 34);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '300 22px "Times New Roman", serif';
   ctx.textAlign = 'left';
+  ctx.fillText(payload.left, barX, payload.top + 20);
+  
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#8b92a5';
+  ctx.fillText(payload.right, barX + barWidth, payload.top + 20);
 
-  roundRect(ctx, 108, payload.top + 56, 864, 16, 8);
-  ctx.fillStyle = 'rgba(226,232,240,0.9)';
-  ctx.fill();
+  ctx.fillStyle = '#ceaa7b';
+  ctx.textAlign = 'center';
+  ctx.font = '300 18px "Times New Roman", serif';
+  ctx.fillText(payload.label, payload.width / 2, payload.top - 10);
 
-  roundRect(ctx, 108, payload.top + 56, (864 * payload.percentA) / 100, 16, 8);
-  ctx.fillStyle = '#3B82F6';
+  // Empty bar
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(barX, payload.top + 36, barWidth, 4);
+
+  // Fill bar
+  const fillGradient = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+  fillGradient.addColorStop(0, 'rgba(206,170,123,0.3)');
+  fillGradient.addColorStop(1, '#ceaa7b');
+  ctx.fillStyle = fillGradient;
+  ctx.fillRect(barX, payload.top + 36, (barWidth * payload.percentA) / 100, 4);
+
+  // Glow point
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(barX + (barWidth * payload.percentA) / 100, payload.top + 38, 4, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -276,7 +282,7 @@ function loadImage(src: string) {
   });
 }
 
-function wrapText(
+function wrapTextCenter(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
@@ -287,6 +293,8 @@ function wrapText(
   const characters = [...text];
   let line = '';
   let offsetY = 0;
+
+  ctx.textAlign = 'center';
 
   characters.forEach((char, index) => {
     const testLine = `${line}${char}`;
@@ -305,25 +313,4 @@ function wrapText(
       ctx.fillText(line, x, y + offsetY);
     }
   });
-}
-
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
 }

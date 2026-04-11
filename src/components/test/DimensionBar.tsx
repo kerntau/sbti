@@ -24,45 +24,55 @@ export default function DimensionBar({
   description,
 }: DimensionBarProps) {
   return (
-    <div className="glass-card rounded-[1.75rem] px-5 py-5 md:px-6">
+    <div className="tarot-card p-5 md:p-6 mb-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-base font-semibold text-slate-900 md:text-lg">{labelA}</span>
-            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">{slangA}</span>
+          <p className="text-[10px] font-serif uppercase tracking-[0.2em] text-[var(--text-gold)] opacity-80 flex items-center gap-2">
+            <span className="opacity-50 text-[8px]">✦</span>
+            {label}
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xl font-serif text-[var(--text-main)] drop-shadow-[0_0_5px_rgba(206,170,123,0.3)]">{labelA}</span>
+            <span className="rounded-[2px] border border-[var(--line-gold)] bg-black/40 px-2 py-0.5 text-[10px] text-[var(--text-gold)]">{slangA}</span>
           </div>
         </div>
         <div className="text-right">
-          <div className="flex items-center justify-end gap-2">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{slangB}</span>
-            <span className="text-base font-semibold text-slate-900 md:text-lg">{labelB}</span>
+          <div className="flex items-center justify-end gap-2 mt-4 md:mt-0">
+            <span className="rounded-[2px] border border-[var(--text-muted)] border-opacity-30 bg-black/20 px-2 py-0.5 text-[10px] text-[var(--text-muted)]">{slangB}</span>
+            <span className="text-xl font-serif text-[var(--text-muted)] opacity-60">{labelB}</span>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-full bg-white/80 ring-1 ring-slate-200/80">
-        <div className="flex h-3.5 w-full">
+      <div className="mt-6 h-[2px] w-full bg-black/60 shadow-[0_0_5px_rgba(0,0,0,0.8)_inset] relative">
+        <div className="absolute inset-0 flex">
           <motion.div
-            className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
+            className="h-full bg-[linear-gradient(90deg,transparent,rgba(206,170,123,0.8),var(--text-gold))] shadow-[0_0_10px_rgba(206,170,123,0.8)]"
             initial={{ width: 0 }}
             animate={{ width: `${percentA}%` }}
-            transition={{ duration: 0.55, ease: 'easeOut' }}
+            transition={{ duration: 1, ease: 'easeOut' }}
           />
           <motion.div
-            className="h-full bg-slate-200"
+            className="h-full bg-slate-800/40"
             initial={{ width: 0 }}
             animate={{ width: `${percentB}%` }}
-            transition={{ duration: 0.55, ease: 'easeOut' }}
+            transition={{ duration: 1, ease: 'easeOut' }}
           />
         </div>
+        {/* 指示符 */}
+        <motion.div
+          className="absolute top-1/2 -ml-[1px] -mt-[6px] h-3 w-[2px] bg-[var(--text-gold)] shadow-[0_0_8px_rgba(206,170,123,1)]"
+          initial={{ left: 0 }}
+          animate={{ left: `${percentA}%` }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        />
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-sm font-semibold text-slate-600">
-        <span>{labelA} {percentA}%</span>
-        <span>{labelB} {percentB}%</span>
+      <div className="mt-4 flex items-center justify-between text-[10px] font-serif text-[var(--text-gold)] tracking-widest">
+        <span>{percentA}%</span>
+        <span className="text-[var(--text-muted)]">{percentB}%</span>
       </div>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+      <p className="mt-4 text-[11px] leading-relaxed tracking-wider text-[var(--text-muted)] font-light">{description}</p>
     </div>
   );
 }
