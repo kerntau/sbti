@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Activity } from 'lucide-react';
 
 interface DimensionBarProps {
   label: string;
@@ -24,55 +25,46 @@ export default function DimensionBar({
   description,
 }: DimensionBarProps) {
   return (
-    <div className="tarot-card p-5 md:p-6 mb-4">
+    <div className="bg-slate-50 border border-slate-200 p-5 md:p-6 mb-4 rounded">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-serif uppercase tracking-[0.2em] text-[var(--text-gold)] opacity-80 flex items-center gap-2">
-            <span className="opacity-50 text-[8px]">✦</span>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+            <Activity className="w-3 h-3" />
             {label}
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-xl font-serif text-[var(--text-main)] drop-shadow-[0_0_5px_rgba(206,170,123,0.3)]">{labelA}</span>
-            <span className="rounded-[2px] border border-[var(--line-gold)] bg-black/40 px-2 py-0.5 text-[10px] text-[var(--text-gold)]">{slangA}</span>
+            <span className="text-xl font-bold text-slate-900 tracking-tight">{labelA}</span>
+            <span className="rounded bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white tracking-widest uppercase">{slangA}</span>
           </div>
         </div>
         <div className="text-right">
           <div className="flex items-center justify-end gap-2 mt-4 md:mt-0">
-            <span className="rounded-[2px] border border-[var(--text-muted)] border-opacity-30 bg-black/20 px-2 py-0.5 text-[10px] text-[var(--text-muted)]">{slangB}</span>
-            <span className="text-xl font-serif text-[var(--text-muted)] opacity-60">{labelB}</span>
+            <span className="rounded bg-white border border-slate-300 px-2 py-0.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">{slangB}</span>
+            <span className="text-xl font-bold text-slate-400 tracking-tight">{labelB}</span>
           </div>
         </div>
       </div>
 
-      <div className="mt-6 h-[2px] w-full bg-black/60 shadow-[0_0_5px_rgba(0,0,0,0.8)_inset] relative">
-        <div className="absolute inset-0 flex">
-          <motion.div
-            className="h-full bg-[linear-gradient(90deg,transparent,rgba(206,170,123,0.8),var(--text-gold))] shadow-[0_0_10px_rgba(206,170,123,0.8)]"
-            initial={{ width: 0 }}
-            animate={{ width: `${percentA}%` }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-          />
-          <motion.div
-            className="h-full bg-slate-800/40"
-            initial={{ width: 0 }}
-            animate={{ width: `${percentB}%` }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-          />
-        </div>
-        {/* 指示符 */}
+      <div className="mt-6 h-1.5 w-full bg-slate-200 rounded-full relative overflow-hidden flex">
         <motion.div
-          className="absolute top-1/2 -ml-[1px] -mt-[6px] h-3 w-[2px] bg-[var(--text-gold)] shadow-[0_0_8px_rgba(206,170,123,1)]"
-          initial={{ left: 0 }}
-          animate={{ left: `${percentA}%` }}
+          className="h-full bg-slate-900 border-r-2 border-white"
+          initial={{ width: 0 }}
+          animate={{ width: `${percentA}%` }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        />
+        <motion.div
+          className="h-full bg-slate-300 pointer-events-none opacity-50"
+          initial={{ width: 0 }}
+          animate={{ width: `${percentB}%` }}
           transition={{ duration: 1, ease: 'easeOut' }}
         />
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-[10px] font-serif text-[var(--text-gold)] tracking-widest">
+      <div className="mt-3 flex items-center justify-between text-[10px] font-mono font-bold text-slate-900 tracking-widest">
         <span>{percentA}%</span>
-        <span className="text-[var(--text-muted)]">{percentB}%</span>
+        <span className="text-slate-400">{percentB}%</span>
       </div>
-      <p className="mt-4 text-[11px] leading-relaxed tracking-wider text-[var(--text-muted)] font-light">{description}</p>
+      <p className="mt-4 text-xs leading-relaxed text-slate-600 border-t border-slate-200 pt-3">{description}</p>
     </div>
   );
 }

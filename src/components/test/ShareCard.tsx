@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getProfileDisplayName, getProfileInitial } from '@/lib/profile';
 import { TestResult } from '@/types';
+import { Download } from 'lucide-react';
 
 interface ShareCardProps {
   result: TestResult;
@@ -17,16 +18,10 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
     let active = true;
 
     async function render() {
-      if (!canvasRef.current) {
-        return;
-      }
-
+      if (!canvasRef.current) return;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        return;
-      }
-
+      if (!ctx) return;
       await drawCard(ctx, canvas, result, active);
     }
 
@@ -38,12 +33,9 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
   }, [result]);
 
   function handleDownload() {
-    if (!canvasRef.current) {
-      return;
-    }
-
+    if (!canvasRef.current) return;
     const link = document.createElement('a');
-    link.download = `SBTI-Tarot-${result.type}.png`;
+    link.download = `SBTI-ClinicalReport-${result.type}.png`;
     link.href = canvasRef.current.toDataURL('image/png');
     link.click();
     setDownloaded(true);
@@ -55,19 +47,20 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
       <canvas
         ref={canvasRef}
         width={1080}
-        height={1350}
-        className="w-full max-w-sm rounded-[2px] shadow-[0_0_30px_rgba(206,170,123,0.15)] border border-[var(--line-gold)] border-opacity-30"
+        height={1400}
+        className="w-full max-w-sm rounded bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-200"
       />
       <button
         type="button"
         onClick={handleDownload}
-        className={`ghost-btn px-6 py-3 text-[10px] uppercase font-serif tracking-widest mt-4 ${
+        className={`flex items-center gap-2 rounded px-6 py-3 text-xs font-bold transition-all mt-4 tracking-widest uppercase ${
           downloaded
-            ? 'opacity-50 text-[var(--text-muted)] border-[var(--text-muted)]'
-            : ''
+            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default'
+            : 'bg-slate-900 text-white border border-slate-900 shadow hover:bg-slate-800'
         }`}
       >
-        {downloaded ? '护身符已被铭刻' : '凝结赛博护身符 ✦'}
+        <Download className="w-4 h-4" />
+        {downloaded ? '图谱已归档' : '输出并保存系统图谱'}
       </button>
     </div>
   );
@@ -85,79 +78,92 @@ async function drawCard(
 
   ctx.clearRect(0, 0, width, height);
 
-  // Background
-  const background = ctx.createLinearGradient(0, 0, width, height);
-  background.addColorStop(0, '#0a0c10');
-  background.addColorStop(0.5, '#050508');
-  background.addColorStop(1, '#020203');
-  ctx.fillStyle = background;
+  // Background - Pure White
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
 
-  // Gold Glows
-  const glowA = ctx.createRadialGradient(160, 180, 20, 160, 180, 400);
-  glowA.addColorStop(0, 'rgba(206,170,123,0.15)');
-  glowA.addColorStop(1, 'rgba(206,170,123,0)');
-  ctx.fillStyle = glowA;
-  ctx.fillRect(0, 0, width, height);
+  // Blueprint Graph Paper Layer
+  ctx.strokeStyle = '#f1f5f9';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= width; x += 40) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+  }
+  for (let y = 0; y <= height; y += 40) {
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+  }
+  ctx.stroke();
 
-  const glowB = ctx.createRadialGradient(920, 1120, 50, 920, 1120, 500);
-  glowB.addColorStop(0, 'rgba(206,170,123,0.1)');
-  glowB.addColorStop(1, 'rgba(206,170,123,0)');
-  ctx.fillStyle = glowB;
-  ctx.fillRect(0, 0, width, height);
+  // Draw Header Line & Block
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, width, 12);
+  ctx.fillRect(60, 60, width - 120, 2);
 
-  // Inner border
-  ctx.strokeStyle = 'rgba(206,170,123,0.3)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(60, 60, width - 120, height - 120);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '800 28px "Inter", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('CLINICAL PROFILE REPORT', 60, 110);
+  
+  ctx.fillStyle = '#64748b';
+  ctx.font = '600 20px "Inter", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(`ID: ${result.profile?.qq || 'GUEST'}`, width - 60, 110);
+  
+  // Outer frame
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(60, 140, width - 120, height - 200);
 
-  // Double border
-  ctx.strokeStyle = 'rgba(206,170,123,0.1)';
-  ctx.strokeRect(70, 70, width - 140, height - 140);
-
-  // Top header text
-  ctx.fillStyle = '#8b92a5';
-  ctx.font = '300 22px "Times New Roman", serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('✧ THE TAROT MATRIX ✧', width / 2, 120);
+  // Meta info section (Top inside frame)
+  ctx.beginPath();
+  ctx.moveTo(60, 280);
+  ctx.lineTo(width - 60, 280);
+  ctx.stroke();
 
   // Draw Avatar
-  await drawProfileHeader(ctx, result, displayName, active, width);
+  await drawProfileHeader(ctx, result, displayName, active);
 
-  // Type Name
+  // Big Type
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '800 160px "Inter", sans-serif';
   ctx.textAlign = 'center';
-  const typeGradient = ctx.createLinearGradient(0, 260, 0, 400);
-  typeGradient.addColorStop(0, '#f7e2c0');
-  typeGradient.addColorStop(0.5, '#ceaa7b');
-  typeGradient.addColorStop(1, '#8c6b41');
-  ctx.fillStyle = typeGradient;
-  ctx.font = '600 140px "Times New Roman", serif';
-  ctx.fillText(result.type, width / 2, 420);
+  ctx.fillText(result.type, width / 2, 460);
 
   // Personality Title
-  ctx.fillStyle = '#e2e8f0';
-  ctx.font = '400 52px "Times New Roman", serif';
-  ctx.fillText(result.personality.name, width / 2, 500);
+  ctx.fillStyle = '#334155';
+  ctx.font = '600 48px "Inter", sans-serif';
+  ctx.fillText(result.personality.name, width / 2, 540);
 
   // Slang
-  ctx.fillStyle = '#ceaa7b';
-  ctx.font = '300 32px "Times New Roman", serif';
-  ctx.fillText(`「${result.personality.slang}」`, width / 2, 560);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '500 32px "Inter", sans-serif';
+  ctx.fillText(`「${result.personality.slang}」`, width / 2, 600);
 
   // Description
-  ctx.fillStyle = '#8b92a5';
-  ctx.font = '300 28px "Times New Roman", serif';
-  wrapTextCenter(ctx, result.personality.tagline, width / 2, 630, width - 200, 40);
+  ctx.fillStyle = '#475569';
+  ctx.font = '400 24px "Inter", sans-serif';
+  wrapTextCenter(ctx, result.personality.tagline, width / 2, 680, width - 240, 36);
 
-  // Axis
-  let top = 760;
+  // Axis divider
+  ctx.beginPath();
+  ctx.moveTo(120, 780);
+  ctx.lineTo(width - 120, 780);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.stroke();
+
+  // Axis Header
+  let top = 820;
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#ceaa7b';
-  ctx.font = '400 24px "Times New Roman", serif';
-  ctx.fillText('✦ 四维能量阵列 ✦', width / 2, 700);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '800 20px "Inter", sans-serif';
+  ctx.fillText('DATA BREAKDOWN', width / 2, top);
+
+  top += 80;
 
   result.axisBreakdown.forEach((axis) => {
-    drawAxisRowDark(ctx, {
+    drawAxisRowClinical(ctx, {
       top,
       width,
       label: axis.label,
@@ -165,37 +171,32 @@ async function drawCard(
       right: `${axis.labelB} ${axis.percentB}%`,
       percentA: axis.percentA,
     });
-    top += 100;
+    top += 90;
   });
 
-  // Footer summary
-  ctx.strokeStyle = 'rgba(206,170,123,0.2)';
-  ctx.strokeRect(100, 1180, width - 200, 100);
+  // Footer
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(60, height - 60, width - 120, 60);
 
-  ctx.fillStyle = '#ceaa7b';
-  ctx.font = '400 22px "Times New Roman", serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '600 20px "Inter", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('✧ 宿命揭示 ✧', width / 2, 1220);
-
-  ctx.fillStyle = '#e2e8f0';
-  ctx.font = '300 26px "Times New Roman", serif';
-  ctx.fillText(result.highlights[0], width / 2, 1260);
+  ctx.fillText('STRICT PROTOCOL REPORTING', width / 2, height - 24);
 }
 
 async function drawProfileHeader(
   ctx: CanvasRenderingContext2D,
   result: TestResult,
   displayName: string,
-  active: boolean,
-  width: number
+  active: boolean
 ) {
   const avatarSize = 80;
-  const avatarX = width / 2 - avatarSize / 2;
-  const avatarY = 160;
+  const avatarX = 100;
+  const avatarY = 170;
 
   ctx.save();
   ctx.beginPath();
-  ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+  ctx.rect(avatarX, avatarY, avatarSize, avatarSize);
   ctx.closePath();
   ctx.clip();
 
@@ -213,64 +214,57 @@ async function drawProfileHeader(
   }
 
   if (!drewAvatar) {
-    ctx.fillStyle = '#0a0c10';
+    ctx.fillStyle = '#f8fafc';
     ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
-    ctx.fillStyle = '#ceaa7b';
-    ctx.font = '400 30px "Times New Roman", serif';
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '600 36px "Inter", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(getProfileInitial(result.profile), avatarX + avatarSize / 2, avatarY + 48);
+    ctx.fillText(getProfileInitial(result.profile), avatarX + avatarSize / 2, avatarY + 52);
   }
   ctx.restore();
 
-  ctx.strokeStyle = '#ceaa7b';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2 + 6, 0, Math.PI * 2);
-  ctx.stroke();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(avatarX, avatarY, avatarSize, avatarSize);
 
-  ctx.fillStyle = '#ceaa7b';
-  ctx.font = '300 24px "Times New Roman", serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(displayName, width / 2, avatarY + avatarSize + 40);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '800 32px "Inter", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(displayName, avatarX + avatarSize + 40, avatarY + 40);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = '500 22px "Inter", monospace';
+  ctx.fillText(`CONFIDENCE: ${Math.round(result.confidence * 100)}%`, avatarX + avatarSize + 40, avatarY + 76);
 }
 
-function drawAxisRowDark(
+function drawAxisRowClinical(
   ctx: CanvasRenderingContext2D,
   payload: { top: number; width: number; label: string; left: string; right: string; percentA: number }
 ) {
-  const barWidth = 700;
+  const barWidth = 720;
   const barX = payload.width / 2 - barWidth / 2;
 
-  ctx.fillStyle = '#e2e8f0';
-  ctx.font = '300 22px "Times New Roman", serif';
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '700 22px "Inter", sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(payload.left, barX, payload.top + 20);
   
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#8b92a5';
+  ctx.fillStyle = '#64748b';
   ctx.fillText(payload.right, barX + barWidth, payload.top + 20);
 
-  ctx.fillStyle = '#ceaa7b';
+  ctx.fillStyle = '#0f172a';
   ctx.textAlign = 'center';
-  ctx.font = '300 18px "Times New Roman", serif';
+  ctx.font = '800 18px "Inter", monospace';
   ctx.fillText(payload.label, payload.width / 2, payload.top - 10);
 
   // Empty bar
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  ctx.fillRect(barX, payload.top + 36, barWidth, 4);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillRect(barX, payload.top + 36, barWidth, 10);
 
   // Fill bar
-  const fillGradient = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
-  fillGradient.addColorStop(0, 'rgba(206,170,123,0.3)');
-  fillGradient.addColorStop(1, '#ceaa7b');
-  ctx.fillStyle = fillGradient;
-  ctx.fillRect(barX, payload.top + 36, (barWidth * payload.percentA) / 100, 4);
-
-  // Glow point
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(barX + (barWidth * payload.percentA) / 100, payload.top + 38, 4, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(barX, payload.top + 36, (barWidth * payload.percentA) / 100, 10);
 }
 
 function loadImage(src: string) {
