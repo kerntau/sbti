@@ -3,11 +3,10 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Database, ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { questions } from '@/data/questions';
 import { dimensionPairs } from '@/data/personality-types';
 import QuestionCard from '@/components/test/QuestionCard';
-import ProgressBar from '@/components/test/ProgressBar';
 import { calculateResult } from '@/lib/scoring';
 import { useTestStore } from '@/store/testStore';
 
@@ -61,13 +60,8 @@ function TestContent() {
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] blueprint-grid">
-        <div className="clinical-card px-8 py-6 flex items-center gap-4 bg-white shadow-sm">
-          <Loader2 className="w-5 h-5 text-slate-800 animate-spin" />
-          <p className="text-xs font-bold font-mono text-slate-600 tracking-widest uppercase">
-            [SYSTEM BOOT] Loading Protocol...
-          </p>
-        </div>
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--bg-paper)]">
+        <Loader2 className="w-5 h-5 text-[var(--text-muted)] animate-spin" />
       </div>
     );
   }
@@ -79,7 +73,7 @@ function TestContent() {
   const answeredCount = Object.keys(activeSession.answers).length;
   const isFirst = activeSession.currentIndex === 0;
   const isLast = activeSession.currentIndex === TOTAL - 1;
-  const lastReachableIndex = Math.min(answeredCount, TOTAL - 1);
+  const progress = Math.round((answeredCount / TOTAL) * 100);
 
   function handleSelect(optionKey: string) {
     if (transitionLocked) return;
@@ -98,7 +92,7 @@ function TestContent() {
         next();
         syncIndex(activeSession.currentIndex + 1);
         setTransitionLocked(false);
-      }, 250); // 结构化 UI 响应更快
+      }, 250);
       return;
     }
 
@@ -117,125 +111,68 @@ function TestContent() {
     syncIndex(activeSession.currentIndex - 1);
   }
 
-  function handleDotClick(index: number) {
-    if (transitionLocked || index > lastReachableIndex || index === activeSession.currentIndex) return;
-    setDirection(index > activeSession.currentIndex ? 1 : -1);
-    goTo(index);
-    syncIndex(index);
-  }
-
-  const answeredIds = new Set(Object.keys(activeSession.answers));
-
   if (isComplete) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] blueprint-grid">
-        <div className="clinical-card px-10 py-10 text-center flex flex-col items-center bg-white shadow-sm">
-          <Loader2 className="w-8 h-8 text-slate-900 animate-spin mb-6" />
-          <p className="text-base font-bold tracking-tight text-slate-900">正在生成体征化分析图谱...</p>
-          <p className="mt-2 text-[10px] font-mono tracking-widest text-slate-400 uppercase">Compile Data Grid</p>
-        </div>
+      <div className="flex min-h-dvh items-center justify-center flex-col gap-3 bg-[var(--bg-paper)]">
+        <Loader2 className="w-6 h-6 text-[var(--text-primary)] animate-spin" />
+        <p className="text-sm text-[var(--text-muted)]">正在生成报告…</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] blueprint-grid relative">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 md:px-8">
+    <main className="min-h-dvh bg-[var(--bg-paper)] flex flex-col">
+      {/* Top bar */}
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-[var(--border-light)]">
+        <div className="mx-auto max-w-lg flex items-center justify-between px-5 py-3">
           <button
             type="button"
             onClick={() => router.push('/')}
-            className="flex items-center gap-2 px-3 py-1.5 rounded transition-colors text-xs font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> 终止协议
+            <ArrowLeft className="w-3.5 h-3.5" />
           </button>
-          <div className="text-right flex items-center gap-3">
-            <Database className="w-4 h-4 text-slate-400" />
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Assessment Running</p>
-              <p className="text-[10px] text-slate-400 tracking-wider mt-0.5 font-mono">STRICT SEQUENCE</p>
-            </div>
-          </div>
+          <span className="text-xs text-[var(--text-muted)] tabular-nums">{answeredCount}/{TOTAL}</span>
+        </div>
+        {/* Progress bar */}
+        <div className="h-0.5 bg-[var(--border-light)]">
+          <div
+            className="h-full bg-[var(--text-primary)] transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </header>
 
-      <div className="relative mx-auto max-w-5xl px-4 md:px-8 pb-12 pt-8">
-        <ProgressBar total={TOTAL} answered={answeredCount} />
+      {/* Question area */}
+      <div className="flex-1 mx-auto w-full max-w-lg px-5 py-6 flex flex-col justify-center">
+        <AnimatePresence mode="wait" custom={direction}>
+          <QuestionCard
+            key={currentQuestion.id}
+            question={currentQuestion}
+            questionNumber={activeSession.currentIndex + 1}
+            total={TOTAL}
+            axisLabel={axisMeta?.label ?? '维度'}
+            axisHint={axisMeta ? `${axisMeta.labelA} vs ${axisMeta.labelB}` : ''}
+            selectedKey={selectedKey}
+            isLocked={transitionLocked}
+            onSelect={handleSelect}
+            direction={direction}
+          />
+        </AnimatePresence>
+      </div>
 
-        <div className="clinical-card mt-8 p-5 bg-white shadow-sm overflow-visible">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[10px] font-bold tracking-widest text-slate-900 uppercase">
-                检测轴节点溯源
-              </p>
-              <p className="mt-1 text-[10px] font-mono tracking-wider text-slate-500 max-w-sm leading-relaxed">
-                [SYSTEM NOTE] 可以点击刻度覆盖之前的输入点。但禁止跳跃访问。
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-1 md:gap-1.5">
-              {questions.map((question, index) => {
-                const answered = answeredIds.has(question.id);
-                const current = index === activeSession.currentIndex;
-
-                return (
-                  <button
-                    key={question.id}
-                    type="button"
-                    onClick={() => handleDotClick(index)}
-                    disabled={index > lastReachableIndex}
-                    className={`h-[4px] transition-all duration-300 rounded ${
-                      current
-                        ? 'w-6 bg-slate-900 border border-slate-900 shadow-[0_0_0_1px_#0f172a]'
-                        : answered
-                          ? 'w-4 bg-slate-400 hover:bg-slate-600'
-                          : index <= lastReachableIndex
-                            ? 'w-2 bg-slate-200 hover:bg-slate-300'
-                            : 'w-2 bg-slate-100'
-                    }`}
-                    aria-label={`跳转至序列 ${index + 1}`}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 min-h-[460px]">
-          <AnimatePresence mode="wait" custom={direction}>
-            <QuestionCard
-              key={currentQuestion.id}
-              question={currentQuestion}
-              questionNumber={activeSession.currentIndex + 1}
-              total={TOTAL}
-              axisLabel={axisMeta?.label ?? '界域维界'}
-              axisHint={axisMeta ? `${axisMeta.labelA} vs ${axisMeta.labelB}` : '极端决策'}
-              selectedKey={selectedKey}
-              isLocked={transitionLocked}
-              onSelect={handleSelect}
-              direction={direction}
-            />
-          </AnimatePresence>
-        </div>
-
-        <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-6">
+      {/* Bottom nav */}
+      {!isFirst && (
+        <div className="mx-auto max-w-lg w-full px-5 pb-6" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
           <button
             type="button"
             onClick={handlePrev}
-            disabled={isFirst}
-            className={`flex items-center gap-2 rounded border px-6 py-2.5 text-xs font-bold transition-all ${
-              isFirst
-                ? 'opacity-40 cursor-not-allowed border-slate-200 text-slate-400 bg-slate-50'
-                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-            }`}
+            className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           >
-             <ArrowLeft className="w-3 h-3" /> 回退上一项
+            <ArrowLeft className="w-3 h-3" /> 上一题
           </button>
-
-          <div className="text-[10px] tracking-widest font-mono text-slate-400 uppercase">
-             PROBED {answeredCount} / {TOTAL}
-          </div>
-        </footer>
-      </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -244,13 +181,8 @@ export default function TestPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] blueprint-grid">
-           <div className="clinical-card px-8 py-6 flex items-center gap-4 bg-white shadow-sm">
-             <Loader2 className="w-5 h-5 text-slate-800 animate-spin" />
-             <p className="text-xs font-bold font-mono text-slate-600 tracking-widest uppercase">
-               [CORE] Loading Protocol...
-             </p>
-           </div>
+        <div className="flex min-h-dvh items-center justify-center bg-[var(--bg-paper)]">
+          <Loader2 className="w-5 h-5 text-[var(--text-muted)] animate-spin" />
         </div>
       }
     >
