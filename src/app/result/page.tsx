@@ -1,31 +1,27 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { getProfileDisplayName } from '@/lib/profile';
 import ResultCard from '@/components/test/ResultCard';
-import ShareCard from '@/components/test/ShareCard';
-import { encodeResult } from '@/lib/scoring';
 import { useTestStore } from '@/store/testStore';
-import { Loader2, ArrowLeft, Share2, Download, RotateCcw } from 'lucide-react';
+import { Loader2, ArrowLeft, Download, RotateCcw } from 'lucide-react';
+import { toPng } from 'html-to-image';
 
 export default function ResultPage() {
   const router = useRouter();
   const { history, resetSession, startSession } = useTestStore();
-  const [showShareCard, setShowShareCard] = useState(false);
-  const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'error'>('idle');
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setShouldRedirect(true);
     }, 600);
 
-    return () => {
-      window.clearTimeout(timer);
-    };
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -44,44 +40,31 @@ export default function ResultPage() {
     );
   }
 
-  async function handleShare() {
-    const origin = typeof window === 'undefined' ? '' : window.location.origin;
-    const url = `${origin}/result/shared?d=${encodeResult(result)}`;
-    const displayName = getProfileDisplayName(result.profile);
-
+  async function handleDownload() {
+    if (!printRef.current) return;
+    setIsDownloading(true);
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${displayName} 的认知偏好报告：${result.type}`,
-          text: `${displayName} 的 SBTI 评估结果是 ${result.type} ${result.personality.name}`,
-          url,
-        });
-        setShareStatus('shared');
-        return;
-      }
-
-      await navigator.clipboard.writeText(url);
-      setShareStatus('copied');
-    } catch {
-      setShareStatus('error');
+      const url = await toPng(printRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+        skipAutoScale: true
+      });
+      const link = document.createElement('a');
+      link.download = `IMSB-${result!.finalType.code}.png`;
+      link.href = url;
+      link.click();
+    } catch (err) {
+      console.error('Failed to generate image', err);
+    } finally {
+      setIsDownloading(false);
     }
   }
 
   function handleRetest() {
     resetSession();
-    startSession({
-      forceReset: true,
-      profile: result.profile,
-    });
+    startSession({ forceReset: true, profile: result.profile });
     router.push('/test');
   }
-
-  const shareLabel = {
-    idle: '分享结果',
-    copied: '链接已复制',
-    shared: '已分享',
-    error: '分享失败',
-  }[shareStatus];
 
   return (
     <div className="report-page">
@@ -98,39 +81,28 @@ export default function ResultPage() {
 
       {/* Report Paper */}
       <motion.div
-        className="report-paper"
+        className="report-paper bg-white"
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
-        <div className="report-content">
+        <div className="report-content" ref={printRef}>
           <ResultCard result={result} />
         </div>
       </motion.div>
 
       {/* Actions */}
-      <div className="max-w-[800px] mx-auto mt-6 px-5 md:px-1 flex flex-col sm:flex-row gap-2.5">
+      <div className="max-w-[800px] mx-auto mt-6 px-5 md:px-1 flex gap-2.5">
         <button
           type="button"
-          onClick={handleShare}
+          onClick={handleDownload}
+          disabled={isDownloading}
           className="btn-primary flex-1"
         >
-          <Share2 className="w-4 h-4" /> {shareLabel}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowShareCard((v) => !v)}
-          className="btn-secondary"
-        >
-          <Download className="w-4 h-4" /> {showShareCard ? '收起图片' : '保存图片'}
+          {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          {isDownloading ? '生成中...' : '下载报告图片'}
         </button>
       </div>
-
-      {showShareCard && (
-        <div className="max-w-[800px] mx-auto mt-6 px-5 md:px-1">
-          <ShareCard result={result} />
-        </div>
-      )}
 
       {/* Retest */}
       <div className="mt-8 text-center">
@@ -152,8 +124,8 @@ export default function ResultPage() {
               {history.slice(1).map((item) => (
                 <div key={item.completedAt} className="flex items-center justify-between bg-[var(--bg-paper)] border border-[var(--border-light)] rounded-md px-4 py-3">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-[var(--text-primary)]">{item.type}</span>
-                    <span className="text-xs text-[var(--text-muted)]">{item.name}</span>
+                    <span className="text-lg font-bold text-[var(--text-primary)]">{item.finalType.code}</span>
+                    <span className="text-xs text-[var(--text-muted)]">{item.finalType.cn}</span>
                   </div>
                   <span className="text-[11px] text-[var(--text-caption)] tabular-nums">
                     {new Date(item.completedAt).toLocaleDateString('zh-CN')}
