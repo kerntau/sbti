@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Activity } from 'lucide-react';
 
 interface DimensionBarProps {
   label: string;
@@ -24,47 +23,31 @@ export default function DimensionBar({
   percentB,
   description,
 }: DimensionBarProps) {
+  const dominant = percentA >= percentB ? 'A' : 'B';
+
   return (
-    <div className="bg-slate-50 border border-slate-200 p-5 md:p-6 mb-4 rounded">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-            <Activity className="w-3 h-3" />
-            {label}
-          </p>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-xl font-bold text-slate-900 tracking-tight">{labelA}</span>
-            <span className="rounded bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white tracking-widest uppercase">{slangA}</span>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="flex items-center justify-end gap-2 mt-4 md:mt-0">
-            <span className="rounded bg-white border border-slate-300 px-2 py-0.5 text-[10px] font-bold text-slate-500 tracking-widest uppercase">{slangB}</span>
-            <span className="text-xl font-bold text-slate-400 tracking-tight">{labelB}</span>
-          </div>
-        </div>
+    <div className="py-3 border-b border-[var(--border-light)] last:border-b-0">
+      <p className="text-[11px] text-[var(--text-muted)] mb-1.5 tracking-wide">{label}</p>
+
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <span className={`text-sm font-semibold ${dominant === 'A' ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+          {labelA} <span className="text-xs font-normal tabular-nums">{percentA}%</span>
+        </span>
+        <span className={`text-sm font-semibold text-right ${dominant === 'B' ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+          {labelB} <span className="text-xs font-normal tabular-nums">{percentB}%</span>
+        </span>
       </div>
 
-      <div className="mt-6 h-1.5 w-full bg-slate-200 rounded-full relative overflow-hidden flex">
+      <div className="h-1 w-full bg-[var(--border-light)] rounded-full overflow-hidden flex">
         <motion.div
-          className="h-full bg-slate-900 border-r-2 border-white"
+          className="h-full bg-[var(--text-primary)] rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${percentA}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-        />
-        <motion.div
-          className="h-full bg-slate-300 pointer-events-none opacity-50"
-          initial={{ width: 0 }}
-          animate={{ width: `${percentB}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
         />
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-[10px] font-mono font-bold text-slate-900 tracking-widest">
-        <span>{percentA}%</span>
-        <span className="text-slate-400">{percentB}%</span>
-      </div>
-      <p className="mt-4 text-xs leading-relaxed text-slate-600 border-t border-slate-200 pt-3">{description}</p>
+      <p className="mt-1.5 text-xs text-[var(--text-muted)] leading-relaxed">{description}</p>
     </div>
   );
 }

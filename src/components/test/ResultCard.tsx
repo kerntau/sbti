@@ -5,7 +5,6 @@ import { TestResult } from '@/types';
 import { getProfileDisplayName, getProfileInitial } from '@/lib/profile';
 import DimensionBar from './DimensionBar';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { FileText, Fingerprint, Activity, Clock } from 'lucide-react';
 
 interface ResultCardProps {
   result: TestResult;
@@ -13,91 +12,109 @@ interface ResultCardProps {
 
 export default function ResultCard({ result }: ResultCardProps) {
   const confidencePct = Math.round(result.confidence * 100);
-  const strongestAxis = [...result.axisBreakdown].sort((a, b) => b.margin - a.margin)[0];
   const displayName = getProfileDisplayName(result.profile);
   const hasProfile = Boolean(result.profile?.nickname || result.profile?.qq || result.profile?.avatarUrl);
-
-  const radarData = result.axisBreakdown.map((axis) => {
-    return {
-      subject: axis.label,
-      value: Math.max(axis.percentA, axis.percentB),
-      fullMark: 100,
-    };
+  const completedDate = new Date(result.completedAt);
+  const dateStr = completedDate.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
+  const durationMin = Math.floor(result.durationMs / 60000);
+  const durationSec = Math.round((result.durationMs % 60000) / 1000);
+
+  const radarData = result.axisBreakdown.map((axis) => ({
+    subject: axis.label,
+    value: Math.max(axis.percentA, axis.percentB),
+    fullMark: 100,
+  }));
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 relative z-10">
-      <section className="clinical-card bg-white overflow-hidden p-8 md:p-10 relative flex flex-col md:flex-row md:items-center justify-between gap-8 border-l-4 border-l-slate-900">
-        
-        <div className="flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-4">
-            <FileText className="w-3 h-3" /> CLINICAL PROFILE REPORT
-          </p>
+    <article>
+      {/* ─── 报告页眉 ─── */}
+      <header className="flex items-center justify-between">
+        <span className="text-sm font-bold tracking-tight text-[var(--text-primary)]">SBTI</span>
+        <span className="text-xs text-[var(--text-muted)] tabular-nums">{dateStr}</span>
+      </header>
+      <hr className="border-t-2 border-[var(--text-primary)] mt-3 mb-8" />
 
-          {hasProfile && (
-            <div className="flex items-center gap-4 mb-6">
-              <div className="relative h-12 w-12 overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
+      {/* ─── 报告标题 ─── */}
+      <div className="text-center mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+          SBTI 认知偏好评估报告
+        </h1>
+      </div>
+
+      {/* ─── 受测者信息 ─── */}
+      <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs text-[var(--text-secondary)] flex-wrap">
+        {hasProfile && (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="relative h-6 w-6 overflow-hidden rounded-full border border-[var(--border-light)] bg-[var(--border-light)] flex-shrink-0">
                 {result.profile?.avatarUrl ? (
-                  <Image src={result.profile.avatarUrl} alt={`${displayName}`} fill sizes="48px" className="object-cover" />
+                  <Image src={result.profile.avatarUrl} alt={displayName} fill sizes="24px" className="object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-lg font-bold text-slate-800">
+                  <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-[var(--text-muted)]">
                     {getProfileInitial(result.profile)}
                   </div>
                 )}
               </div>
-              <div>
-                <p className="text-xs font-bold tracking-widest text-slate-900 uppercase">SUBJECT: {displayName}</p>
-                <p className="text-[10px] font-mono tracking-widest text-slate-400 mt-1">ID: {result.profile?.qq || 'GUEST-001'}</p>
-              </div>
+              <span>受测者: <strong className="font-semibold">{displayName}</strong></span>
             </div>
-          )}
+            {result.profile?.qq && (
+              <span className="text-[var(--text-muted)]">编号: {result.profile.qq}</span>
+            )}
+          </>
+        )}
+        <span className="text-[var(--text-muted)]">置信度: {confidencePct}%</span>
+      </div>
 
-          <div className="relative z-10 flex flex-wrap items-baseline gap-4 mt-2">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900">
-              {result.type}
-            </h1>
-            <p className="text-xl md:text-2xl font-medium tracking-widest text-slate-400">{result.personality.name}</p>
-          </div>
-          
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed tracking-wide text-slate-600">
-            {result.personality.description}
+      <hr className="report-rule mt-6" />
+
+      {/* ─── §1 总体结论 ─── */}
+      <section className="report-section">
+        <h2 className="report-section-title">§1　总体结论</h2>
+        <hr className="report-rule" />
+
+        <div className="text-center mb-6">
+          <p className="text-5xl sm:text-6xl font-bold tracking-tight text-[var(--text-primary)] leading-none">
+            {result.type}
           </p>
-
-          <div className="mt-8 flex flex-wrap gap-4 z-10">
-            <span className="border border-slate-200 bg-slate-50 px-4 py-2 text-[10px] font-bold tracking-widest text-slate-900 uppercase rounded flex items-center gap-2">
-              <Activity className="w-3 h-3" />
-              CONFIDENCE {confidencePct}%
-            </span>
-            <span className="border border-slate-200 bg-slate-50 px-4 py-2 text-[10px] font-bold tracking-widest text-slate-500 uppercase rounded flex items-center gap-2">
-              <Clock className="w-3 h-3" />
-              T_ELAPSED {(result.durationMs / 1000).toFixed(1)}s
-            </span>
-            <span className="border border-slate-200 bg-slate-50 px-4 py-2 text-[10px] font-bold tracking-widest text-slate-500 uppercase rounded flex items-center gap-2">
-              <Fingerprint className="w-3 h-3 text-slate-900" />
-              DOMINANT {strongestAxis.dominantLabel}
-            </span>
-          </div>
+          <p className="mt-3 text-base text-[var(--text-secondary)]">
+            {result.personality.name}
+            <span className="mx-2 text-[var(--border-rule)]">·</span>
+            {result.personality.slang}
+          </p>
+          <p className="mt-2 text-sm text-[var(--text-muted)] italic">
+            「{result.personality.tagline}」
+          </p>
         </div>
 
-        <div className="w-full md:w-64 h-64 flex-shrink-0 relative">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-              <PolarGrid stroke="#cbd5e1" strokeDasharray="3 3" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600 }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-              <Radar name="Type" dataKey="value" stroke="#0f172a" strokeWidth={2} fill="#0f172a" fillOpacity={0.1} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
+        <p className="text-sm leading-[1.85] text-[var(--text-secondary)]">
+          {result.personality.description}
+        </p>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="clinical-card bg-white p-6 md:p-8">
-          <h2 className="text-sm font-bold text-slate-900 tracking-widest uppercase mb-6 flex items-center justify-between border-b border-slate-100 pb-3">
-             DATA BREAKDOWN (四维参数分型)
-          </h2>
+      {/* ─── §2 维度分析 ─── */}
+      <section className="report-section">
+        <h2 className="report-section-title">§2　维度分析</h2>
+        <hr className="report-rule" />
 
-          <div className="space-y-6">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+          {/* Radar Chart */}
+          <div className="w-full md:w-52 h-52 flex-shrink-0 mx-auto md:mx-0 min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+              <RadarChart cx="50%" cy="50%" outerRadius="68%" data={radarData}>
+                <PolarGrid stroke="#e0e0dc" strokeWidth={0.8} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#888', fontSize: 11, fontWeight: 500 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar name="Type" dataKey="value" stroke="#1a1a1a" strokeWidth={1.5} fill="#1a1a1a" fillOpacity={0.05} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Dimension Bars */}
+          <div className="flex-1 min-w-0">
             {result.axisBreakdown.map((axis) => (
               <DimensionBar
                 key={axis.axis}
@@ -113,40 +130,75 @@ export default function ResultCard({ result }: ResultCardProps) {
             ))}
           </div>
         </div>
+      </section>
 
-        <div className="space-y-6 flex flex-col">
-          <section className="clinical-card bg-white p-6 md:p-8 flex-1">
-            <h3 className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase mb-4 border-b border-slate-50 pb-2">
-              [+] ASSESSED STRENGTHS (效能优势)
-            </h3>
-            <div className="space-y-3">
-              {result.personality.strengths.map((item) => (
-                <div key={item} className="border-l-2 border-emerald-500 bg-emerald-50/50 pl-3 py-2 text-xs leading-relaxed text-slate-700">
-                  {item}
-                </div>
-              ))}
-            </div>
-            
-            <h3 className="text-[10px] font-bold text-rose-600 tracking-widest uppercase mt-8 mb-4 border-b border-slate-50 pb-2">
-              [-] IDENTIFIED RISKS (效能偏差风险)
-            </h3>
-            <div className="space-y-3">
-              {result.personality.weaknesses.map((item) => (
-                <div key={item} className="border-l-2 border-rose-500 bg-rose-50/50 pl-3 py-2 text-xs leading-relaxed text-slate-600">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </section>
+      {/* ─── §3 特质评估 ─── */}
+      <section className="report-section">
+        <h2 className="report-section-title">§3　特质评估</h2>
+        <hr className="report-rule" />
 
-          <section className="clinical-card bg-slate-900 p-6 md:p-8">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2 flex items-center justify-between">
-              COMMUNICATION PROTOCOL <FileText className="w-3 h-3" />
-            </p>
-            <p className="text-xs leading-relaxed text-slate-300 font-mono">{result.personality.communication}</p>
-          </section>
+        <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
+          <div>
+            <h3 className="text-xs font-semibold text-[var(--success)] mb-3">3.1　核心优势</h3>
+            <ol className="space-y-2.5 list-none p-0 m-0">
+              {result.personality.strengths.map((item, i) => (
+                <li key={item} className="text-sm text-[var(--text-secondary)] leading-relaxed flex gap-2.5">
+                  <span className="text-xs text-[var(--text-muted)] mt-0.5 tabular-nums shrink-0 w-4 text-right">{i + 1}.</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-semibold text-[var(--danger)] mb-3">3.2　潜在盲区</h3>
+            <ol className="space-y-2.5 list-none p-0 m-0">
+              {result.personality.weaknesses.map((item, i) => (
+                <li key={item} className="text-sm text-[var(--text-secondary)] leading-relaxed flex gap-2.5">
+                  <span className="text-xs text-[var(--text-muted)] mt-0.5 tabular-nums shrink-0 w-4 text-right">{i + 1}.</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       </section>
-    </div>
+
+      {/* ─── §4 沟通建议 ─── */}
+      <section className="report-section">
+        <h2 className="report-section-title">§4　沟通建议</h2>
+        <hr className="report-rule" />
+        <p className="text-sm leading-[1.85] text-[var(--text-secondary)]">
+          {result.personality.communication}
+        </p>
+      </section>
+
+      {/* ─── §5 补充说明 ─── */}
+      <section className="report-section">
+        <h2 className="report-section-title">§5　补充说明</h2>
+        <hr className="report-rule" />
+        <ul className="space-y-2 list-none p-0 m-0">
+          {result.highlights.map((item) => (
+            <li key={item} className="text-sm text-[var(--text-secondary)] leading-relaxed flex gap-2">
+              <span className="text-[var(--text-muted)] shrink-0">—</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+
+        {result.durationMs > 0 && (
+          <p className="mt-4 text-xs text-[var(--text-muted)] tabular-nums">
+            测试用时: {durationMin > 0 ? `${durationMin} 分 ` : ''}{durationSec} 秒
+          </p>
+        )}
+      </section>
+
+      {/* ─── 报告页脚 ─── */}
+      <footer className="mt-12 pt-4 border-t border-[var(--border-rule)]">
+        <p className="text-[11px] text-[var(--text-caption)] text-center leading-relaxed">
+          SBTI 认知偏好评估系统 · 数据仅存储于本地浏览器 · 不构成任何专业心理学诊断
+        </p>
+      </footer>
+    </article>
   );
 }

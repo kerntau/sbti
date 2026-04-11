@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { getProfileDisplayName, getProfileInitial } from '@/lib/profile';
+import { getProfileDisplayName } from '@/lib/profile';
 import { TestResult } from '@/types';
 import { Download } from 'lucide-react';
 
@@ -22,7 +22,7 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      await drawCard(ctx, canvas, result, active);
+      drawCard(ctx, canvas, result);
     }
 
     render();
@@ -35,7 +35,7 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
   function handleDownload() {
     if (!canvasRef.current) return;
     const link = document.createElement('a');
-    link.download = `SBTI-ClinicalReport-${result.type}.png`;
+    link.download = `SBTI-Report-${result.type}.png`;
     link.href = canvasRef.current.toDataURL('image/png');
     link.click();
     setDownloaded(true);
@@ -48,263 +48,175 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
         ref={canvasRef}
         width={1080}
         height={1400}
-        className="w-full max-w-sm rounded bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-200"
+        className="w-full max-w-sm rounded bg-white shadow-sm border border-[var(--border-light)]"
       />
       <button
         type="button"
         onClick={handleDownload}
-        className={`flex items-center gap-2 rounded px-6 py-3 text-xs font-bold transition-all mt-4 tracking-widest uppercase ${
+        className={`flex items-center gap-2 rounded-md px-6 py-3 text-xs font-semibold transition-all ${
           downloaded
-            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default'
-            : 'bg-slate-900 text-white border border-slate-900 shadow hover:bg-slate-800'
+            ? 'bg-[var(--border-light)] text-[var(--text-muted)] cursor-default'
+            : 'bg-[var(--text-primary)] text-white hover:opacity-85'
         }`}
       >
         <Download className="w-4 h-4" />
-        {downloaded ? '图谱已归档' : '输出并保存系统图谱'}
+        {downloaded ? '已保存' : '保存报告图片'}
       </button>
     </div>
   );
 }
 
-async function drawCard(
+function drawCard(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   result: TestResult,
-  active: boolean
 ) {
-  const width = canvas.width;
-  const height = canvas.height;
+  const W = canvas.width;
+  const H = canvas.height;
   const displayName = getProfileDisplayName(result.profile);
+  const dateStr = new Date(result.completedAt).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const PAD = 100;
 
-  ctx.clearRect(0, 0, width, height);
+  ctx.clearRect(0, 0, W, H);
 
-  // Background - Pure White
+  // White background
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, W, H);
 
-  // Blueprint Graph Paper Layer
-  ctx.strokeStyle = '#f1f5f9';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let x = 0; x <= width; x += 40) {
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-  }
-  for (let y = 0; y <= height; y += 40) {
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-  }
-  ctx.stroke();
-
-  // Draw Header Line & Block
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(0, 0, width, 12);
-  ctx.fillRect(60, 60, width - 120, 2);
-
-  ctx.fillStyle = '#0f172a';
-  ctx.font = '800 28px "Inter", sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('CLINICAL PROFILE REPORT', 60, 110);
-  
-  ctx.fillStyle = '#64748b';
-  ctx.font = '600 20px "Inter", monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText(`ID: ${result.profile?.qq || 'GUEST'}`, width - 60, 110);
-  
-  // Outer frame
-  ctx.strokeStyle = '#0f172a';
+  // Outer border
+  ctx.strokeStyle = '#1a1a1a';
   ctx.lineWidth = 3;
-  ctx.strokeRect(60, 140, width - 120, height - 200);
+  ctx.strokeRect(PAD / 2, PAD / 2, W - PAD, H - PAD);
 
-  // Meta info section (Top inside frame)
+  // ─── Header ───
+  let y = 110;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = '700 30px "Inter", system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('SBTI', PAD, y);
+
+  ctx.fillStyle = '#999';
+  ctx.font = '400 20px "Inter", system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(dateStr, W - PAD, y);
+
+  // Header rule
+  y += 24;
   ctx.beginPath();
-  ctx.moveTo(60, 280);
-  ctx.lineTo(width - 60, 280);
+  ctx.moveTo(PAD, y);
+  ctx.lineTo(W - PAD, y);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Draw Avatar
-  await drawProfileHeader(ctx, result, displayName, active);
-
-  // Big Type
-  ctx.fillStyle = '#0f172a';
-  ctx.font = '800 160px "Inter", sans-serif';
+  // ─── Title ───
+  y += 72;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = '700 38px "Inter", system-ui, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(result.type, width / 2, 460);
+  ctx.fillText('认知偏好评估报告', W / 2, y);
 
-  // Personality Title
-  ctx.fillStyle = '#334155';
-  ctx.font = '600 48px "Inter", sans-serif';
-  ctx.fillText(result.personality.name, width / 2, 540);
+  // Subject info
+  y += 48;
+  ctx.fillStyle = '#888';
+  ctx.font = '400 22px "Inter", system-ui, sans-serif';
+  ctx.fillText(`受测者: ${displayName}　　置信度: ${Math.round(result.confidence * 100)}%`, W / 2, y);
 
-  // Slang
-  ctx.fillStyle = '#64748b';
-  ctx.font = '500 32px "Inter", sans-serif';
-  ctx.fillText(`「${result.personality.slang}」`, width / 2, 600);
+  // Divider
+  y += 40;
+  drawRule(ctx, PAD, W - PAD, y, '#d0d0cc');
 
-  // Description
-  ctx.fillStyle = '#475569';
-  ctx.font = '400 24px "Inter", sans-serif';
-  wrapTextCenter(ctx, result.personality.tagline, width / 2, 680, width - 240, 36);
-
-  // Axis divider
-  ctx.beginPath();
-  ctx.moveTo(120, 780);
-  ctx.lineTo(width - 120, 780);
-  ctx.strokeStyle = '#e2e8f0';
-  ctx.stroke();
-
-  // Axis Header
-  let top = 820;
+  // ─── Type Block ───
+  y += 100;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = '800 140px "Inter", system-ui, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#0f172a';
-  ctx.font = '800 20px "Inter", sans-serif';
-  ctx.fillText('DATA BREAKDOWN', width / 2, top);
+  ctx.fillText(result.type, W / 2, y);
 
-  top += 80;
+  y += 56;
+  ctx.fillStyle = '#555';
+  ctx.font = '500 36px "Inter", system-ui, sans-serif';
+  ctx.fillText(`${result.personality.name} · ${result.personality.slang}`, W / 2, y);
+
+  y += 48;
+  ctx.fillStyle = '#999';
+  ctx.font = '400 24px "Inter", system-ui, sans-serif';
+  ctx.fillText(`「${result.personality.tagline}」`, W / 2, y);
+
+  // Divider
+  y += 56;
+  drawRule(ctx, PAD, W - PAD, y, '#d0d0cc');
+
+  // ─── Axis Section ───
+  y += 48;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = '700 22px "Inter", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('§2　维度分析', W / 2, y);
+
+  y += 50;
+
+  const barW = 700;
+  const barX = W / 2 - barW / 2;
 
   result.axisBreakdown.forEach((axis) => {
-    drawAxisRowClinical(ctx, {
-      top,
-      width,
-      label: axis.label,
-      left: `${axis.labelA} ${axis.percentA}%`,
-      right: `${axis.labelB} ${axis.percentB}%`,
-      percentA: axis.percentA,
-    });
-    top += 90;
-  });
-
-  // Footer
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(60, height - 60, width - 120, 60);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '600 20px "Inter", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('STRICT PROTOCOL REPORTING', width / 2, height - 24);
-}
-
-async function drawProfileHeader(
-  ctx: CanvasRenderingContext2D,
-  result: TestResult,
-  displayName: string,
-  active: boolean
-) {
-  const avatarSize = 80;
-  const avatarX = 100;
-  const avatarY = 170;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(avatarX, avatarY, avatarSize, avatarSize);
-  ctx.closePath();
-  ctx.clip();
-
-  let drewAvatar = false;
-  if (result.profile?.avatarUrl) {
-    try {
-      const image = await loadImage(result.profile.avatarUrl);
-      if (active) {
-        ctx.drawImage(image, avatarX, avatarY, avatarSize, avatarSize);
-        drewAvatar = true;
-      }
-    } catch {
-      drewAvatar = false;
-    }
-  }
-
-  if (!drewAvatar) {
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '600 36px "Inter", sans-serif';
+    // Axis label
+    ctx.fillStyle = '#999';
+    ctx.font = '500 18px "Inter", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(getProfileInitial(result.profile), avatarX + avatarSize / 2, avatarY + 52);
-  }
-  ctx.restore();
+    ctx.fillText(axis.label, W / 2, y);
 
-  ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(avatarX, avatarY, avatarSize, avatarSize);
+    const labelY = y + 32;
 
-  ctx.fillStyle = '#0f172a';
-  ctx.font = '800 32px "Inter", sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(displayName, avatarX + avatarSize + 40, avatarY + 40);
+    // Left label
+    ctx.textAlign = 'left';
+    ctx.fillStyle = axis.percentA >= axis.percentB ? '#1a1a1a' : '#999';
+    ctx.font = `${axis.percentA >= axis.percentB ? '700' : '400'} 20px "Inter", system-ui, sans-serif`;
+    ctx.fillText(`${axis.labelA} ${axis.percentA}%`, barX, labelY);
 
-  ctx.fillStyle = '#64748b';
-  ctx.font = '500 22px "Inter", monospace';
-  ctx.fillText(`CONFIDENCE: ${Math.round(result.confidence * 100)}%`, avatarX + avatarSize + 40, avatarY + 76);
-}
+    // Right label
+    ctx.textAlign = 'right';
+    ctx.fillStyle = axis.percentB > axis.percentA ? '#1a1a1a' : '#999';
+    ctx.font = `${axis.percentB > axis.percentA ? '700' : '400'} 20px "Inter", system-ui, sans-serif`;
+    ctx.fillText(`${axis.labelB} ${axis.percentB}%`, barX + barW, labelY);
 
-function drawAxisRowClinical(
-  ctx: CanvasRenderingContext2D,
-  payload: { top: number; width: number; label: string; left: string; right: string; percentA: number }
-) {
-  const barWidth = 720;
-  const barX = payload.width / 2 - barWidth / 2;
+    // Bar bg
+    const barY = labelY + 16;
+    ctx.fillStyle = '#e8e6e1';
+    ctx.fillRect(barX, barY, barW, 8);
 
-  ctx.fillStyle = '#0f172a';
-  ctx.font = '700 22px "Inter", sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(payload.left, barX, payload.top + 20);
-  
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#64748b';
-  ctx.fillText(payload.right, barX + barWidth, payload.top + 20);
+    // Bar fill
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(barX, barY, (barW * axis.percentA) / 100, 8);
 
-  ctx.fillStyle = '#0f172a';
-  ctx.textAlign = 'center';
-  ctx.font = '800 18px "Inter", monospace';
-  ctx.fillText(payload.label, payload.width / 2, payload.top - 10);
-
-  // Empty bar
-  ctx.fillStyle = '#e2e8f0';
-  ctx.fillRect(barX, payload.top + 36, barWidth, 10);
-
-  // Fill bar
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(barX, payload.top + 36, (barWidth * payload.percentA) / 100, 10);
-}
-
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new window.Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = src;
+    y += 90;
   });
+
+  // ─── Footer ───
+  const footerY = H - PAD / 2 - 24;
+  drawRule(ctx, PAD, W - PAD, footerY - 30, '#1a1a1a');
+
+  ctx.fillStyle = '#b0b0b0';
+  ctx.font = '400 18px "Inter", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('SBTI 认知偏好评估系统 · 数据仅存于本地', W / 2, footerY);
 }
 
-function wrapTextCenter(
+function drawRule(
   ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
+  x1: number,
+  x2: number,
   y: number,
-  maxWidth: number,
-  lineHeight: number
+  color: string,
 ) {
-  const characters = [...text];
-  let line = '';
-  let offsetY = 0;
-
-  ctx.textAlign = 'center';
-
-  characters.forEach((char, index) => {
-    const testLine = `${line}${char}`;
-    const width = ctx.measureText(testLine).width;
-
-    if (width > maxWidth && line) {
-      ctx.fillText(line, x, y + offsetY);
-      line = char;
-      offsetY += lineHeight;
-      return;
-    }
-
-    line = testLine;
-
-    if (index === characters.length - 1) {
-      ctx.fillText(line, x, y + offsetY);
-    }
-  });
+  ctx.beginPath();
+  ctx.moveTo(x1, y);
+  ctx.lineTo(x2, y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.stroke();
 }
