@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
       {
         pathname: "/api/qq-avatar",
       },
+      {
+        pathname: "/images/types/**",
+      },
     ],
   },
 };
