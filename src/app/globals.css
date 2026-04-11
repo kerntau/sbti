@@ -1,17 +1,22 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: var(--primary);
+  --color-gold: var(--text-gold);
+}
+
 :root {
-  --bg-main: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.7);
-  --bg-card-strong: rgba(255, 255, 255, 0.88);
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --line-soft: rgba(255, 255, 255, 0.7);
-  --line-muted: rgba(148, 163, 184, 0.18);
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --secondary: #818cf8;
-  --success: #10b981;
+  --bg-main: #050508;
+  --bg-card: rgba(15, 17, 26, 0.4);
+  --bg-card-strong: rgba(15, 17, 26, 0.7);
+  --text-main: #e2e8f0;
+  --text-muted: #8b92a5;
+  --text-gold: #ceaa7b;
+  --line-gold: rgba(206, 170, 123, 0.3);
+  --line-gold-strong: rgba(206, 170, 123, 0.6);
+  --line-soft: rgba(255, 255, 255, 0.05);
+  --primary: #ceaa7b;
+  --primary-hover: #e5cd9e;
 }
 
 * {
@@ -27,76 +32,113 @@ body {
   min-height: 100dvh;
   margin: 0;
   background:
-    radial-gradient(100% 100% at 50% 0%, rgba(219, 234, 254, 0.8) 0%, rgba(248, 250, 252, 1) 52%),
-    linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+    radial-gradient(100% 150% at 50% -10%, rgba(20, 23, 40, 0.8) 0%, rgba(5, 5, 8, 1) 100%),
+    linear-gradient(180deg, #050508 0%, #010102 100%);
+  background-color: #050508;
   color: var(--text-main);
   font-family: var(--font-body), "PingFang SC", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading), var(--font-body), sans-serif;
-  letter-spacing: -0.03em;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), "Noto Serif SC", "Songti SC", serif;
+  letter-spacing: 0.02em;
+  color: var(--text-gold);
+  font-weight: 500;
 }
 
-a,
-button {
+a, button {
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+button:focus-visible, a:focus-visible {
+  outline: 1px solid var(--primary);
+  outline-offset: 4px;
 }
 
 ::selection {
-  background: rgba(59, 130, 246, 0.18);
-  color: var(--text-main);
+  background: rgba(206, 170, 123, 0.2);
+  color: var(--text-gold);
 }
 
-.glass-card {
+.tarot-card {
+  position: relative;
   background: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--line-soft);
-  box-shadow: 0 10px 40px -16px rgba(15, 23, 42, 0.14);
+  border: 1px solid var(--line-gold);
+  border-radius: 4px;
+  box-shadow: 
+    0 10px 40px -10px rgba(0, 0, 0, 0.9),
+    inset 0 0 20px rgba(206, 170, 123, 0.02);
+  padding: 8px;
+  overflow: hidden;
 }
 
-.glass-card-strong {
-  background: var(--bg-card-strong);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  box-shadow: 0 12px 40px -18px rgba(15, 23, 42, 0.14);
+.tarot-card::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 1px solid rgba(206, 170, 123, 0.15);
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px solid var(--line-gold);
+  color: var(--text-gold);
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  font-family: var(--font-heading), "Noto Serif SC", serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ghost-btn::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(206, 170, 123, 0.15), transparent);
+  transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ghost-btn:hover {
+  border-color: var(--line-gold-strong);
+  box-shadow: 
+    0 0 15px rgba(206, 170, 123, 0.15), 
+    inset 0 0 10px rgba(206, 170, 123, 0.05);
+}
+
+.ghost-btn:hover::before {
+  left: 100%;
 }
 
 .text-balance {
   text-wrap: balance;
 }
 
-.soft-grid {
+.star-grid {
   background-image:
-    linear-gradient(to right, rgba(148, 163, 184, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+    linear-gradient(to right, rgba(206, 170, 123, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(206, 170, 123, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

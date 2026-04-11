@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__MiniMax__web_search",
+      "mcp__web-reader__webReader",
+      "WebFetch(domain:new.qq.com)",
+      "Bash(npm --version)",
+      "Bash(go version:*)",
+      "Bash(docker --version)",
+      "Read(//c/Users/Chen/.claude/**)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes --name sbti-test)",
+      "Bash(npx create-next-app@latest SBTI-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes)",
+      "Bash(npx create-next-app@latest sbti-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes)",
+      "Bash(cp -r sbti-temp/. SBTI/)",
+      "Bash(rm -rf sbti-temp)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "minimax"
+  ]
+}

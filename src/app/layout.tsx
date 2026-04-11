@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Manrope } from 'next/font/google';
+import { Playfair_Display, Inter } from 'next/font/google';
 import './globals.css';
 
-const headingFont = Manrope({
+const headingFont = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-heading',
 });
 
-const bodyFont = DM_Sans({
+const bodyFont = Inter({
   subsets: ['latin'],
   variable: '--font-body',
 });
