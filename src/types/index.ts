@@ -1,33 +1,58 @@
-export type TraitCode = 'E' | 'I' | 'S' | 'N' | 'T' | 'F' | 'J' | 'P';
+// ── IMSB 十五维度模型类型定义 ──
 
-export type AxisCode = 'EI' | 'SN' | 'TF' | 'JP';
+export type DimensionCode =
+  | 'S1' | 'S2' | 'S3'   // 自我模型
+  | 'E1' | 'E2' | 'E3'   // 情感模型
+  | 'A1' | 'A2' | 'A3'   // 态度模型
+  | 'Ac1' | 'Ac2' | 'Ac3' // 行动驱力模型
+  | 'So1' | 'So2' | 'So3'; // 社交模型
 
-export type OptionKey = 'A' | 'B' | 'C' | 'D' | 'E';
+export type IMSBLevel = 'L' | 'M' | 'H';
 
-export interface Option {
-  key: OptionKey;
+export interface QuestionOption {
   label: string;
-  scores: Partial<Record<TraitCode, number>>;
+  value: number; // 1, 2, 3
 }
 
 export interface Question {
   id: string;
-  dimension: AxisCode;
+  dim: DimensionCode;
   text: string;
-  reverseScored: boolean;
-  options: Option[];
+  options: QuestionOption[];
+  special?: boolean;
+  kind?: string;
 }
 
-export interface PersonalityType {
-  code: string;
+export interface DimensionMeta {
   name: string;
-  slang: string;
-  tagline: string;
-  description: string;
-  strengths: string[];
-  weaknesses: string[];
-  communication: string;
-  color: string;
+  model: string;
+}
+
+export interface IMSBPersonalityType {
+  code: string;
+  cn: string;
+  intro: string;
+  desc: string;
+}
+
+export interface NormalTypePattern {
+  code: string;
+  pattern: string; // e.g. "HHH-HMH-MHH-HHH-MHM"
+}
+
+export interface DimensionExplanation {
+  L: string;
+  M: string;
+  H: string;
+}
+
+export interface DimensionResult {
+  dim: DimensionCode;
+  name: string;
+  model: string;
+  rawScore: number;
+  level: IMSBLevel;
+  explanation: string;
 }
 
 export interface ParticipantProfile {
@@ -36,61 +61,30 @@ export interface ParticipantProfile {
   avatarUrl: string | null;
 }
 
-export interface AxisBreakdown {
-  axis: AxisCode;
-  label: string;
-  traitA: TraitCode;
-  traitB: TraitCode;
-  labelA: string;
-  labelB: string;
-  slangA: string;
-  slangB: string;
-  percentA: number;
-  percentB: number;
-  dominantTrait: TraitCode;
-  dominantLabel: string;
-  dominantSlang: string;
-  margin: number;
-  leaning: 'balanced' | 'moderate' | 'strong';
-  description: string;
-}
-
 export interface TestResult {
-  type: string;
-  name: string;
-  slang: string;
-  scores: Partial<Record<TraitCode, number>>;
-  confidence: number;
-  personality: PersonalityType;
+  finalType: IMSBPersonalityType;
+  modeKicker: string;
+  badge: string;
+  sub: string;
+  special: boolean;
+  secondaryType: (NormalTypePattern & IMSBPersonalityType & { distance: number; exact: number; similarity: number }) | null;
+  dimensions: DimensionResult[];
+  ranked: (NormalTypePattern & IMSBPersonalityType & { distance: number; exact: number; similarity: number })[];
   completedAt: number;
   durationMs: number;
-  percentages: Partial<Record<TraitCode, number>>;
-  axisBreakdown: AxisBreakdown[];
-  highlights: string[];
   profile: ParticipantProfile | null;
 }
 
 export interface TestSession {
-  answers: Record<string, string>;
+  answers: Record<string, number>;
   currentIndex: number;
   startTime: number;
   completed: boolean;
   profile: ParticipantProfile | null;
 }
 
-export interface DimensionPair {
-  axis: AxisCode;
-  label: string;
-  traitA: TraitCode;
-  traitB: TraitCode;
-  labelA: string;
-  labelB: string;
-  slangA: string;
-  slangB: string;
-}
-
 export interface SharePayload {
-  t: string;
-  c: number;
-  p: Partial<Record<TraitCode, number>>;
+  t: string;   // type code
+  s: number;   // similarity
+  d: Record<string, number>; // dimension raw scores
 }
