@@ -10,7 +10,7 @@ export default function HomePage() {
 
           {/* 页眉条 */}
           <div className="flex items-center justify-between text-[11px] text-[var(--text-caption)] mb-6">
-            <span className="font-medium tracking-wider uppercase">SBTI</span>
+            <span className="font-medium tracking-wider uppercase">IMSB</span>
             <span className="tabular-nums">{new Date().getFullYear()}</span>
           </div>
           <hr className="border-t-2 border-[var(--text-primary)] mb-8" />
@@ -18,17 +18,17 @@ export default function HomePage() {
           {/* 标题区 */}
           <header className="text-center mb-10">
             <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-muted)] mb-4">
-              Cognitive Preference Assessment
+              Personality Assessment
             </p>
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-[var(--text-primary)] leading-none">
-              SBTI
+              IMSB
             </h1>
             <div className="mx-auto mt-5 w-10 border-t border-[var(--border-rule)]" />
             <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">
-              四维认知偏好评估
+              十五维人格测试
             </p>
             <p className="mt-1.5 text-xs text-[var(--text-muted)]">
-              28 道题 · 约 5 分钟
+              30+ 道题 · 约 5 分钟
             </p>
           </header>
 

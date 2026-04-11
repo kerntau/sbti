@@ -1,20 +1,12 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import DimensionBar from '@/components/test/DimensionBar';
 import { decodeResult } from '@/lib/scoring';
-import { dimensionPairs, personalityTypes } from '@/data/personality-types';
+import { typeLibrary, dimensionMeta, dimensionExplanations, dimensionOrder } from '@/data/personality-types';
+import { DimensionCode, IMSBLevel } from '@/types';
 
-function buildDescription(percentA: number, percentB: number, labelA: string, labelB: string) {
-  const margin = Math.abs(percentA - percentB);
-  if (margin <= 8) {
-    return `这一维比较平衡，你会在 ${labelA} 和 ${labelB} 之间灵活切换。`;
-  }
-
-  if (percentA >= percentB) {
-    return `你略偏 ${labelA}，平时更容易自然表现出这一面。`;
-  }
-
-  return `你略偏 ${labelB}，在熟悉场景里会更明显。`;
+function sumToLevel(score: number): IMSBLevel {
+  if (score <= 3) return 'L';
+  if (score === 4) return 'M';
+  return 'H';
 }
 
 export default async function SharedResultPage({
@@ -24,7 +16,7 @@ export default async function SharedResultPage({
 }) {
   const params = await searchParams;
   const payload = params.d ? decodeResult(params.d) : null;
-  const personality = payload ? personalityTypes[payload.t] : null;
+  const personality = payload ? typeLibrary[payload.t] : null;
 
   if (!payload || !personality) {
     return (
@@ -45,15 +37,12 @@ export default async function SharedResultPage({
     );
   }
 
-  const confidence = payload.c ?? 0;
-  const accent = personality.color.includes('gradient') ? '#2563EB' : personality.color;
-
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef5ff_100%)] pb-14">
       <header className="border-b border-slate-200 bg-white/86 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
           <div>
-            <p className="text-sm font-black tracking-[0.3em] text-slate-900">SBTI</p>
+            <p className="text-sm font-black tracking-[0.3em] text-slate-900">IMSB</p>
             <p className="text-xs text-slate-500">朋友分享给你的结果</p>
           </div>
           <Link
@@ -69,59 +58,59 @@ export default async function SharedResultPage({
       </header>
 
       <div className="mx-auto max-w-5xl px-4 pt-8">
+        {/* 人格类型卡 */}
         <section className="overflow-hidden rounded-[36px] bg-slate-950 text-white shadow-[0_40px_100px_rgba(15,23,42,0.24)]">
-          <div className="grid gap-0 lg:grid-cols-[1fr_0.92fr]">
-            <div className="px-6 py-8 md:px-10 md:py-10">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-200">你的朋友测出了</p>
-              <h1 className="mt-5 text-6xl font-black tracking-tight md:text-8xl" style={{ color: accent }}>
-                {personality.code}
-              </h1>
-              <p className="mt-4 text-3xl font-black">{personality.name}</p>
-              <p className="mt-2 text-lg font-semibold text-slate-300">「{personality.slang}」</p>
-              <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">{personality.description}</p>
-              <div className="mt-6 inline-flex rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-slate-100">
-                结果稳定度 {confidence}%
-              </div>
-            </div>
-            <div className="border-t border-white/10 bg-white/5 p-4 lg:border-l lg:border-t-0 md:p-5">
-              <Image
-                src="/illustrations/personality-spectrum.svg"
-                alt="SBTI 人格维度图示"
-                width={1200}
-                height={960}
-                sizes="(max-width: 1024px) 100vw, 36vw"
-                className="h-full w-full rounded-[28px] object-cover"
-              />
+          <div className="px-6 py-8 md:px-10 md:py-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-200">你的朋友测出了</p>
+            <h1 className="mt-5 text-6xl font-black tracking-tight md:text-8xl">
+              {personality.code}
+            </h1>
+            <p className="mt-4 text-3xl font-black">{personality.cn}</p>
+            <p className="mt-2 text-lg font-semibold text-slate-300">「{personality.intro}」</p>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">{personality.desc}</p>
+            <div className="mt-6 inline-flex rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-slate-100">
+              匹配度 {payload.s}%
             </div>
           </div>
         </section>
 
-        <section className="mt-8 rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] md:p-8">
-          <h2 className="text-2xl font-black text-slate-900">四维趋势</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500 md:text-base">
-            这是一份可分享的轻量版结果，重点展示四个维度的倾向百分比。
-          </p>
-          <div className="mt-6 space-y-4">
-            {dimensionPairs.map((pair) => {
-              const percentA = payload.p[pair.traitA] ?? 50;
-              const percentB = payload.p[pair.traitB] ?? 50;
+        {/* 维度展示 */}
+        {payload.d && Object.keys(payload.d).length > 0 && (
+          <section className="mt-8 rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] md:p-8">
+            <h2 className="text-2xl font-black text-slate-900">十五维度概览</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500 md:text-base">
+              这是一份轻量版分享结果，展示各维度的方向等级。
+            </p>
+            <div className="mt-6 space-y-3">
+              {dimensionOrder.map((dim) => {
+                const rawScore = payload.d[dim] ?? 0;
+                const level = sumToLevel(rawScore);
+                const meta = dimensionMeta[dim as DimensionCode];
+                const explanation = dimensionExplanations[dim as DimensionCode]?.[level] ?? '';
+                const barLevel = { L: 1, M: 2, H: 3 }[level];
 
-              return (
-                <DimensionBar
-                  key={pair.axis}
-                  label={pair.label}
-                  labelA={pair.labelA}
-                  labelB={pair.labelB}
-                  slangA={pair.slangA}
-                  slangB={pair.slangB}
-                  percentA={percentA}
-                  percentB={percentB}
-                  description={buildDescription(percentA, percentB, pair.labelA, pair.labelB)}
-                />
-              );
-            })}
-          </div>
-        </section>
+                return (
+                  <div key={dim} className="border border-slate-200 rounded-lg p-3">
+                    <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-semibold text-slate-900">{meta?.name ?? dim}</span>
+                      <span className="text-xs font-bold text-slate-700 tabular-nums">{level} / {rawScore}分</span>
+                    </div>
+                    <div className="flex gap-1 mb-2">
+                      {[1, 2, 3].map((n) => (
+                        <div
+                          key={n}
+                          className="h-1.5 flex-1 rounded-full"
+                          style={{ backgroundColor: n <= barLevel ? '#1e293b' : '#e2e8f0' }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">{explanation}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
