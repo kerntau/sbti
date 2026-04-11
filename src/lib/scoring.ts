@@ -1,47 +1,140 @@
 import { questions } from '@/data/questions';
-import { dimensionPairs, personalityTypes } from '@/data/personality-types';
-import { AxisBreakdown, PersonalityType, SharePayload, TestResult, TraitCode } from '@/types';
+import {
+  dimensionMeta,
+  dimensionOrder,
+  dimensionExplanations,
+  normalTypes,
+  typeLibrary,
+} from '@/data/personality-types';
+import {
+  DimensionCode,
+  DimensionResult,
+  IMSBLevel,
+  SharePayload,
+  TestResult,
+} from '@/types';
 
-const traitCodes: TraitCode[] = ['E', 'I', 'N', 'S', 'T', 'F', 'J', 'P'];
-const questionMap = new Map(questions.map((question) => [question.id, question]));
-
-export type ScoringResult = TestResult;
-
-function clampConfidence(value: number) {
-  return Math.max(0, Math.min(1, value));
+// ── 原始分 → 等级 ──
+function sumToLevel(score: number): IMSBLevel {
+  if (score <= 3) return 'L';
+  if (score === 4) return 'M';
+  return 'H';
 }
 
-function createFallbackPersonality(type: string): PersonalityType {
+function levelNum(level: string): number {
+  return { L: 1, M: 2, H: 3 }[level] ?? 2;
+}
+
+function parsePattern(pattern: string): string[] {
+  return pattern.replace(/-/g, '').split('');
+}
+
+// ── 核心计分 ──
+export function calculateResult(answers: Record<string, number>): TestResult {
+  // 1. 计算各维度原始分
+  const rawScores: Record<string, number> = {};
+  for (const dim of Object.keys(dimensionMeta)) {
+    rawScores[dim] = 0;
+  }
+
+  // 只统计常规题（非 special）
+  for (const q of questions) {
+    if (q.special) continue;
+    const val = answers[q.id];
+    if (val !== undefined) {
+      rawScores[q.dim] += val;
+    }
+  }
+
+  // 2. 原始分 → L/M/H
+  const levels: Record<string, IMSBLevel> = {};
+  for (const [dim, score] of Object.entries(rawScores)) {
+    levels[dim] = sumToLevel(score);
+  }
+
+  // 3. 构造用户向量并匹配
+  const userVector = dimensionOrder.map((dim) => levelNum(levels[dim]));
+
+  const ranked = normalTypes.map((type) => {
+    const vector = parsePattern(type.pattern).map(levelNum);
+    let distance = 0;
+    let exact = 0;
+    for (let i = 0; i < vector.length; i++) {
+      const diff = Math.abs(userVector[i] - vector[i]);
+      distance += diff;
+      if (diff === 0) exact += 1;
+    }
+    const similarity = Math.max(0, Math.round((1 - distance / 30) * 100));
+    const lib = typeLibrary[type.code];
+    return { ...type, ...lib, distance, exact, similarity };
+  }).sort((a, b) => {
+    if (a.distance !== b.distance) return a.distance - b.distance;
+    if (b.exact !== a.exact) return b.exact - a.exact;
+    return b.similarity - a.similarity;
+  });
+
+  const bestNormal = ranked[0];
+
+  // 4. 检查隐藏人格（酒鬼）
+  const drunkTriggered = answers['drink_gate_q2'] === 2;
+
+  let finalType = typeLibrary[bestNormal.code];
+  let modeKicker = '你的主类型';
+  let badge = `匹配度 ${bestNormal.similarity}% · 精准命中 ${bestNormal.exact}/15 维`;
+  let sub = '维度命中度较高，当前结果可视为你的第一人格画像。';
+  let special = false;
+  let secondaryType: typeof ranked[0] | null = null;
+
+  if (drunkTriggered) {
+    finalType = typeLibrary.DRUNK;
+    secondaryType = bestNormal;
+    modeKicker = '隐藏人格已激活';
+    badge = '匹配度 100% · 酒精异常因子已接管';
+    sub = '乙醇亲和性过强，系统已直接跳过常规人格审判。';
+    special = true;
+  } else if (bestNormal.similarity < 60) {
+    finalType = typeLibrary.HHHH;
+    modeKicker = '系统强制兜底';
+    badge = `标准人格库最高匹配仅 ${bestNormal.similarity}%`;
+    sub = '标准人格库对你的脑回路集体罢工了，于是系统把你强制分配给了 HHHH。';
+    special = true;
+  }
+
+  // 5. 构造 15 维度结果
+  const dimensions: DimensionResult[] = dimensionOrder.map((dim) => {
+    const level = levels[dim];
+    const meta = dimensionMeta[dim];
+    const explanation = dimensionExplanations[dim][level];
+    return {
+      dim: dim as DimensionCode,
+      name: meta.name,
+      model: meta.model,
+      rawScore: rawScores[dim],
+      level,
+      explanation,
+    };
+  });
+
   return {
-    code: type,
-    name: type,
-    slang: '未命名人格',
-    tagline: '这次的结果超出了预设人格字典',
-    description: '你的答题结果可以被正常计算，只是当前人格文案字典里还没有对应条目。',
-    strengths: ['思路清晰', '有自己的判断'],
-    weaknesses: ['结果文案待补充'],
-    communication: '先结合四维趋势理解自己，再回到测试重新确认一次结果。',
-    color: '#2563EB',
+    finalType,
+    modeKicker,
+    badge,
+    sub,
+    special,
+    secondaryType,
+    dimensions,
+    ranked,
+    completedAt: Date.now(),
+    durationMs: 0,
+    profile: null,
   };
 }
 
-function describeAxis(axis: AxisBreakdown) {
-  if (axis.margin <= 8) {
-    return `你在${axis.label}上很平衡，${axis.labelA}和${axis.labelB}会随着场景切换。`;
-  }
-
-  if (axis.margin <= 24) {
-    return `你略偏${axis.dominantLabel}，多数时候会自然表现出「${axis.dominantSlang}」的一面。`;
-  }
-
-  return `你在${axis.label}上明显偏${axis.dominantLabel}，这种倾向已经成了你的稳定风格。`;
-}
-
+// ── 分享编解码 ──
 function encodeBase64Url(value: string) {
   const base64 = typeof window === 'undefined'
     ? Buffer.from(value, 'utf8').toString('base64')
-    : window.btoa(value);
-
+    : window.btoa(unescape(encodeURIComponent(value)));
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
@@ -49,133 +142,32 @@ function decodeBase64Url(value: string) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
   const padding = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
   const decoded = normalized + padding;
-
   return typeof window === 'undefined'
     ? Buffer.from(decoded, 'base64').toString('utf8')
-    : window.atob(decoded);
+    : decodeURIComponent(escape(window.atob(decoded)));
 }
 
-export function calculateResult(answers: Record<string, string>): ScoringResult {
-  const rawScores = Object.fromEntries(traitCodes.map((trait) => [trait, 0])) as Record<TraitCode, number>;
-  let answeredCount = 0;
-
-  for (const [questionId, optionKey] of Object.entries(answers)) {
-    const question = questionMap.get(questionId);
-    if (!question) {
-      continue;
-    }
-
-    const option = question.options.find((item) => item.key === optionKey);
-    if (!option) {
-      continue;
-    }
-
-    answeredCount += 1;
-
-    for (const [trait, score] of Object.entries(option.scores) as [TraitCode, number][]) {
-      rawScores[trait] += score;
-    }
+export function buildSharePayload(result: TestResult): SharePayload {
+  const dimScores: Record<string, number> = {};
+  for (const d of result.dimensions) {
+    dimScores[d.dim] = d.rawScore;
   }
-
-  const axisBreakdown: AxisBreakdown[] = dimensionPairs.map((pair) => {
-    const scoreA = rawScores[pair.traitA] ?? 0;
-    const scoreB = rawScores[pair.traitB] ?? 0;
-    const total = scoreA + scoreB;
-    const ratioA = total > 0 ? scoreA / total : 0.5;
-    const percentA = Math.round(ratioA * 100);
-    const percentB = 100 - percentA;
-    const dominantTrait = percentA >= percentB ? pair.traitA : pair.traitB;
-    const dominantLabel = dominantTrait === pair.traitA ? pair.labelA : pair.labelB;
-    const dominantSlang = dominantTrait === pair.traitA ? pair.slangA : pair.slangB;
-    const margin = Math.abs(percentA - percentB);
-    const leaning = margin <= 8 ? 'balanced' : margin <= 24 ? 'moderate' : 'strong';
-
-    const axis: AxisBreakdown = {
-      axis: pair.axis,
-      label: pair.label,
-      traitA: pair.traitA,
-      traitB: pair.traitB,
-      labelA: pair.labelA,
-      labelB: pair.labelB,
-      slangA: pair.slangA,
-      slangB: pair.slangB,
-      percentA,
-      percentB,
-      dominantTrait,
-      dominantLabel,
-      dominantSlang,
-      margin,
-      leaning,
-      description: '',
-    };
-
-    return {
-      ...axis,
-      description: describeAxis(axis),
-    };
-  });
-
-  const type = axisBreakdown.map((item) => item.dominantTrait).join('');
-  const personality = personalityTypes[type] ?? createFallbackPersonality(type);
-  const avgMargin = axisBreakdown.reduce((sum, item) => sum + item.margin, 0) / axisBreakdown.length;
-  const confidence = clampConfidence(avgMargin / 100);
-  const strongestAxis = [...axisBreakdown].sort((a, b) => b.margin - a.margin)[0];
-  const mostBalancedAxis = [...axisBreakdown].sort((a, b) => a.margin - b.margin)[0];
-  const percentages = axisBreakdown.reduce<Partial<Record<TraitCode, number>>>((acc, item) => {
-    acc[item.traitA] = item.percentA;
-    acc[item.traitB] = item.percentB;
-    return acc;
-  }, {});
-
-  const highlights = [
-    `你最鲜明的特质是${strongestAxis.dominantLabel}，在${strongestAxis.label}上领先 ${strongestAxis.margin}% 。`,
-    `你在${mostBalancedAxis.label}上最灵活，说明你会根据环境切换到更合适的节奏。`,
-    answeredCount === questions.length
-      ? '本次测试题目已全部完成，结果稳定性会比半程退出时更高。'
-      : '当前结果基于未完成答题推算，仅适合作为轻量参考。',
-  ];
-
   return {
-    type,
-    name: personality?.name ?? type,
-    slang: personality?.slang ?? '未定义风格',
-    scores: percentages,
-    confidence,
-    personality,
-    completedAt: Date.now(),
-    durationMs: 0,
-    percentages,
-    axisBreakdown,
-    highlights,
-    profile: null,
+    t: result.finalType.code,
+    s: result.ranked[0]?.similarity ?? 0,
+    d: dimScores,
   };
 }
 
-export function buildSharePayload(result: Pick<ScoringResult, 'type' | 'confidence' | 'percentages'>): SharePayload {
-  return {
-    t: result.type,
-    c: Math.round(result.confidence * 100),
-    p: result.percentages,
-  };
-}
-
-export function encodeResult(result: Pick<ScoringResult, 'type' | 'confidence' | 'percentages'>): string {
+export function encodeResult(result: TestResult): string {
   return encodeBase64Url(JSON.stringify(buildSharePayload(result)));
 }
 
 export function decodeResult(encoded: string): SharePayload | null {
   try {
     const parsed = JSON.parse(decodeBase64Url(encoded)) as SharePayload;
-
-    if (!parsed.t || !personalityTypes[parsed.t]) {
-      return null;
-    }
-
-    return {
-      t: parsed.t,
-      c: parsed.c ?? 0,
-      p: parsed.p ?? {},
-    };
+    if (!parsed.t || !typeLibrary[parsed.t]) return null;
+    return { t: parsed.t, s: parsed.s ?? 0, d: parsed.d ?? {} };
   } catch {
     return null;
   }
