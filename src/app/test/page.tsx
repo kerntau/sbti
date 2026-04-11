@@ -4,13 +4,11 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { questions } from '@/data/questions';
-import { dimensionPairs } from '@/data/personality-types';
+import { dimensionMeta } from '@/data/personality-types';
 import QuestionCard from '@/components/test/QuestionCard';
 import { calculateResult } from '@/lib/scoring';
 import { useTestStore } from '@/store/testStore';
-
-const TOTAL = questions.length;
+import { DimensionCode } from '@/types';
 
 function TestContent() {
   const router = useRouter();
@@ -28,6 +26,7 @@ function TestContent() {
     prev,
     goTo,
     completeSession,
+    getVisibleQuestions,
   } = useTestStore();
 
   const urlIndex = searchParams.get('q');
@@ -41,6 +40,9 @@ function TestContent() {
     }
   }, [session, startSession]);
 
+  const visibleQuestions = getVisibleQuestions();
+  const TOTAL = visibleQuestions.length;
+
   useEffect(() => {
     if (!session || !urlIndex) return;
 
@@ -50,7 +52,7 @@ function TestContent() {
 
     if (Number.isNaN(parsed) || parsed < 0 || parsed > lastReachableIndex) return;
     if (parsed !== session.currentIndex) goTo(parsed);
-  }, [goTo, session, urlIndex]);
+  }, [goTo, session, urlIndex, TOTAL]);
 
   function syncIndex(index: number) {
     const params = new URLSearchParams(searchParams.toString());
@@ -67,24 +69,31 @@ function TestContent() {
   }
 
   const activeSession = session;
-  const currentQuestion = questions[activeSession.currentIndex];
-  const axisMeta = dimensionPairs.find((item) => item.axis === currentQuestion.dimension);
-  const selectedKey = activeSession.answers[currentQuestion.id] ?? null;
+  const currentQuestion = visibleQuestions[activeSession.currentIndex];
+
+  if (!currentQuestion) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--bg-paper)]">
+        <Loader2 className="w-5 h-5 text-[var(--text-muted)] animate-spin" />
+      </div>
+    );
+  }
+
+  const dimInfo = currentQuestion.special
+    ? null
+    : dimensionMeta[currentQuestion.dim as DimensionCode];
+  const dimLabel = currentQuestion.special ? '补充题' : (dimInfo?.name ?? '维度');
+  const selectedValue = activeSession.answers[currentQuestion.id] ?? null;
   const answeredCount = Object.keys(activeSession.answers).length;
   const isFirst = activeSession.currentIndex === 0;
   const isLast = activeSession.currentIndex === TOTAL - 1;
-  const progress = Math.round((answeredCount / TOTAL) * 100);
+  const progress = TOTAL > 0 ? Math.round((answeredCount / TOTAL) * 100) : 0;
 
-  function handleSelect(optionKey: string) {
+  function handleSelect(value: number) {
     if (transitionLocked) return;
 
-    const nextAnswers = {
-      ...activeSession.answers,
-      [currentQuestion.id]: optionKey,
-    };
-
     setTransitionLocked(true);
-    setAnswer(currentQuestion.id, optionKey);
+    setAnswer(currentQuestion.id, value);
 
     if (!isLast) {
       window.setTimeout(() => {
@@ -92,16 +101,17 @@ function TestContent() {
         next();
         syncIndex(activeSession.currentIndex + 1);
         setTransitionLocked(false);
-      }, 250);
+      }, 50);
       return;
     }
 
     window.setTimeout(() => {
       setIsComplete(true);
-      const result = calculateResult(nextAnswers);
+      const finalAnswers = { ...activeSession.answers, [currentQuestion.id]: value };
+      const result = calculateResult(finalAnswers);
       completeSession(result);
       router.push('/result');
-    }, 300);
+    }, 100);
   }
 
   function handlePrev() {
@@ -151,9 +161,8 @@ function TestContent() {
             question={currentQuestion}
             questionNumber={activeSession.currentIndex + 1}
             total={TOTAL}
-            axisLabel={axisMeta?.label ?? '维度'}
-            axisHint={axisMeta ? `${axisMeta.labelA} vs ${axisMeta.labelB}` : ''}
-            selectedKey={selectedKey}
+            dimLabel={dimLabel}
+            selectedValue={selectedValue}
             isLocked={transitionLocked}
             onSelect={handleSelect}
             direction={direction}

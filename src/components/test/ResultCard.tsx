@@ -1,204 +1,195 @@
 'use client';
 
 import Image from 'next/image';
-import { TestResult } from '@/types';
+import { TestResult, DimensionResult } from '@/types';
 import { getProfileDisplayName, getProfileInitial } from '@/lib/profile';
-import DimensionBar from './DimensionBar';
+import { typeImageMap, typeRarity, getRarityLabel, getRarityColor } from '@/data/type-images';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 interface ResultCardProps {
   result: TestResult;
 }
 
+const LEVEL_DOT: Record<string, { color: string; label: string; val: number }> = {
+  L: { color: '#94a3b8', label: '低', val: 1 },
+  M: { color: '#f59e0b', label: '中', val: 2 },
+  H: { color: '#22c55e', label: '高', val: 3 },
+};
+
+function shortName(name: string) {
+  return name.replace(/^[A-Za-z]+\d?\s*/, '');
+}
+
 export default function ResultCard({ result }: ResultCardProps) {
-  const confidencePct = Math.round(result.confidence * 100);
   const displayName = getProfileDisplayName(result.profile);
-  const hasProfile = Boolean(result.profile?.nickname || result.profile?.qq || result.profile?.avatarUrl);
-  const completedDate = new Date(result.completedAt);
-  const dateStr = completedDate.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const hasAvatar = Boolean(result.profile?.avatarUrl);
+  const hasProfile = Boolean(result.profile?.nickname || result.profile?.qq);
+  
+  const dateStr = new Date(result.completedAt).toLocaleDateString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
   });
   const durationMin = Math.floor(result.durationMs / 60000);
   const durationSec = Math.round((result.durationMs % 60000) / 1000);
+  const typeCode = result.finalType.code;
+  const imgSrc = typeImageMap[typeCode];
+  const rarity = typeRarity[typeCode];
+  const rarityLabel = rarity != null ? getRarityLabel(rarity) : null;
+  const rarityColor = rarity != null ? getRarityColor(rarity) : '#888';
 
-  const radarData = result.axisBreakdown.map((axis) => ({
-    subject: axis.label,
-    value: Math.max(axis.percentA, axis.percentB),
-    fullMark: 100,
-  }));
+  // 分组模型以便生成图表
+  const modelGroups = result.dimensions.reduce<Record<string, DimensionResult[]>>((acc, dim) => {
+    if (!acc[dim.model]) acc[dim.model] = [];
+    acc[dim.model].push(dim);
+    return acc;
+  }, {});
+
+  // 生成雷达图数据
+  const radarData = Object.entries(modelGroups).map(([model, dims]) => {
+    const valSum = dims.reduce((sum, dim) => sum + (LEVEL_DOT[dim.level]?.val ?? 2), 0);
+    const avg = valSum / dims.length;
+    return {
+      subject: model.replace('模型', ''),
+      value: Number(avg.toFixed(1)),
+      fullMark: 3,
+    };
+  });
 
   return (
-    <article>
-      {/* ─── 报告页眉 ─── */}
-      <header className="flex items-center justify-between">
-        <span className="text-sm font-bold tracking-tight text-[var(--text-primary)]">SBTI</span>
-        <span className="text-xs text-[var(--text-muted)] tabular-nums">{dateStr}</span>
+    <article className="relative bg-white text-gray-900 mx-auto max-w-2xl px-6 py-10 sm:px-12 sm:py-16 overflow-hidden rounded-none shadow-sm" style={{ border: '1px solid #e5e7eb' }}>
+      {/* 纹理背景或通知书水印 */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+      
+      {/* 通知书抬头 */}
+      <header className="flex justify-between items-end border-b-2 border-black pb-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight uppercase">IMSB Assessment</h1>
+          <p className="text-sm font-medium text-gray-500 tracking-widest mt-1">综合人格评估报告（正式版）</p>
+        </div>
+        <div className="text-right">
+          <p className="font-mono text-xs text-gray-500 border border-gray-300 px-2 py-0.5 inline-block">CONFIDENTIAL</p>
+          <p className="font-mono text-xs text-gray-500 mt-2">{dateStr}</p>
+        </div>
       </header>
-      <hr className="border-t-2 border-[var(--text-primary)] mt-3 mb-8" />
 
-      {/* ─── 报告标题 ─── */}
-      <div className="text-center mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-          SBTI 认知偏好评估报告
-        </h1>
+      {/* 参测者基本信息 */}
+      <div className="flex items-center gap-4 bg-gray-50/80 border border-gray-200 p-4 mb-8">
+        <div className="relative w-16 h-16 bg-gray-200 flex-shrink-0 border border-gray-300">
+          {hasAvatar ? (
+            <Image src={result.profile!.avatarUrl!} alt={displayName} fill sizes="64px" className="object-cover grayscale hover:grayscale-0 transition-all duration-500" />
+          ) : (
+             <div className="w-full h-full flex items-center justify-center text-xl font-bold text-gray-400">
+               {getProfileInitial(result.profile)}
+             </div>
+          )}
+        </div>
+        <div className="flex-1">
+          <div className="flex gap-2 items-baseline mb-1">
+            <span className="text-xs font-semibold text-gray-500 w-12 shrink-0">代号/ID</span>
+            <span className="text-base font-bold">{displayName}</span>
+          </div>
+          <div className="flex gap-2 items-baseline mb-1">
+            <span className="text-xs font-semibold text-gray-500 w-12 shrink-0">联系QQ</span>
+            <span className="text-sm font-mono">{result.profile?.qq || '未提供'}</span>
+          </div>
+          <div className="flex gap-2 items-baseline">
+            <span className="text-xs font-semibold text-gray-500 w-12 shrink-0">耗时</span>
+            <span className="text-sm font-mono">{durationMin > 0 ? `${durationMin}m ` : ''}{durationSec}s</span>
+          </div>
+        </div>
+        
+        {/* 右侧盖章效果 */}
+        <div className="hidden sm:flex flex-col items-center justify-center pr-4">
+          <div className="w-16 h-16 rounded-full border-[3px] border-red-600/80 text-red-600/80 font-bold flex items-center justify-center transform -rotate-12">
+            <span className="text-xs tracking-widest block text-center leading-tight">REVIEWED<br/>DONE</span>
+          </div>
+        </div>
       </div>
 
-      {/* ─── 受测者信息 ─── */}
-      <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs text-[var(--text-secondary)] flex-wrap">
-        {hasProfile && (
-          <>
-            <div className="flex items-center gap-2">
-              <div className="relative h-6 w-6 overflow-hidden rounded-full border border-[var(--border-light)] bg-[var(--border-light)] flex-shrink-0">
-                {result.profile?.avatarUrl ? (
-                  <Image src={result.profile.avatarUrl} alt={displayName} fill sizes="24px" className="object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-[var(--text-muted)]">
-                    {getProfileInitial(result.profile)}
-                  </div>
-                )}
-              </div>
-              <span>受测者: <strong className="font-semibold">{displayName}</strong></span>
+      {/* 核心结论区 */}
+      <section className="mb-10 flex flex-col md:flex-row gap-8 items-center border border-gray-200 p-6 bg-white relative z-10">
+        <div className="w-48 h-48 sm:w-56 sm:h-56 relative flex-shrink-0 mix-blend-multiply">
+          {imgSrc ? (
+            <Image src={imgSrc} alt={typeCode} fill sizes="224px" className="object-contain" priority />
+          ) : (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">暂无图鉴</div>
+          )}
+        </div>
+        
+        <div className="flex-1 text-center md:text-left">
+          <p className="text-xs font-bold text-gray-500 tracking-widest uppercase mb-2">{result.modeKicker} / {result.badge}</p>
+          <h2 className="text-5xl font-black tracking-tighter mb-2">{typeCode}</h2>
+          <h3 className="text-xl font-bold text-gray-800 mb-3">{result.finalType.cn}</h3>
+          <p className="text-sm font-medium text-gray-600 italic border-l-4 border-gray-300 pl-3 mb-4 text-left">
+            「{result.finalType.intro}」
+          </p>
+          {rarityLabel && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 border border-gray-200 text-xs font-bold font-mono">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: rarityColor }}></span>
+              {rarityLabel} (稀有度: {rarity}%)
             </div>
-            {result.profile?.qq && (
-              <span className="text-[var(--text-muted)]">编号: {result.profile.qq}</span>
-            )}
-          </>
-        )}
-        <span className="text-[var(--text-muted)]">置信度: {confidencePct}%</span>
-      </div>
-
-      <hr className="report-rule mt-6" />
-
-      {/* ─── §1 总体结论 ─── */}
-      <section className="report-section">
-        <h2 className="report-section-title">§1　总体结论</h2>
-        <hr className="report-rule" />
-
-        <div className="text-center mb-6">
-          <p className="text-5xl sm:text-6xl font-bold tracking-tight text-[var(--text-primary)] leading-none">
-            {result.type}
-          </p>
-          <p className="mt-3 text-base text-[var(--text-secondary)]">
-            {result.personality.name}
-            <span className="mx-2 text-[var(--border-rule)]">·</span>
-            {result.personality.slang}
-          </p>
-          <p className="mt-2 text-sm text-[var(--text-muted)] italic">
-            「{result.personality.tagline}」
-          </p>
+          )}
         </div>
-
-        <p className="text-sm leading-[1.85] text-[var(--text-secondary)]">
-          {result.personality.description}
-        </p>
       </section>
 
-      {/* ─── §2 维度分析 ─── */}
-      <section className="report-section">
-        <h2 className="report-section-title">§2　维度分析</h2>
-        <hr className="report-rule" />
+      {/* 解读说明 */}
+      <section className="mb-12">
+        <h4 className="text-sm font-bold text-black border-b border-gray-200 pb-2 mb-4 uppercase tracking-widest">结论陈述 / Conclusion</h4>
+        <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line space-y-4 font-medium">
+          <p>{result.finalType.desc}</p>
+          {result.sub && <p className="text-gray-500 mt-2 bg-gray-50 p-3 italic text-xs">{result.sub}</p>}
+        </div>
+      </section>
 
-        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
-          {/* Radar Chart */}
-          <div className="w-full md:w-52 h-52 flex-shrink-0 mx-auto md:mx-0 min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-              <RadarChart cx="50%" cy="50%" outerRadius="68%" data={radarData}>
-                <PolarGrid stroke="#e0e0dc" strokeWidth={0.8} />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#888', fontSize: 11, fontWeight: 500 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar name="Type" dataKey="value" stroke="#1a1a1a" strokeWidth={1.5} fill="#1a1a1a" fillOpacity={0.05} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Dimension Bars */}
-          <div className="flex-1 min-w-0">
-            {result.axisBreakdown.map((axis) => (
-              <DimensionBar
-                key={axis.axis}
-                label={axis.label}
-                labelA={axis.labelA}
-                labelB={axis.labelB}
-                slangA={axis.slangA}
-                slangB={axis.slangB}
-                percentA={axis.percentA}
-                percentB={axis.percentB}
-                description={axis.description}
+      {/* 图表展示区 */}
+      <section className="mb-10">
+        <h4 className="text-sm font-bold text-black border-b border-gray-200 pb-2 mb-6 uppercase tracking-widest">五维模型透视图 / Radar Chart</h4>
+        <div className="h-64 sm:h-72 w-full bg-gray-50 border border-gray-100 p-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: '#374151', fontSize: 12, fontWeight: 600 }} />
+              <PolarRadiusAxis angle={90} domain={[1, 3]} tick={false} axisLine={false} />
+              <Radar
+                name="Score"
+                dataKey="value"
+                stroke="#111827"
+                strokeWidth={2}
+                fill="#111827"
+                fillOpacity={0.15}
               />
-            ))}
-          </div>
+            </RadarChart>
+          </ResponsiveContainer>
         </div>
       </section>
 
-      {/* ─── §3 特质评估 ─── */}
-      <section className="report-section">
-        <h2 className="report-section-title">§3　特质评估</h2>
-        <hr className="report-rule" />
-
-        <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
-          <div>
-            <h3 className="text-xs font-semibold text-[var(--success)] mb-3">3.1　核心优势</h3>
-            <ol className="space-y-2.5 list-none p-0 m-0">
-              {result.personality.strengths.map((item, i) => (
-                <li key={item} className="text-sm text-[var(--text-secondary)] leading-relaxed flex gap-2.5">
-                  <span className="text-xs text-[var(--text-muted)] mt-0.5 tabular-nums shrink-0 w-4 text-right">{i + 1}.</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-semibold text-[var(--danger)] mb-3">3.2　潜在盲区</h3>
-            <ol className="space-y-2.5 list-none p-0 m-0">
-              {result.personality.weaknesses.map((item, i) => (
-                <li key={item} className="text-sm text-[var(--text-secondary)] leading-relaxed flex gap-2.5">
-                  <span className="text-xs text-[var(--text-muted)] mt-0.5 tabular-nums shrink-0 w-4 text-right">{i + 1}.</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── §4 沟通建议 ─── */}
-      <section className="report-section">
-        <h2 className="report-section-title">§4　沟通建议</h2>
-        <hr className="report-rule" />
-        <p className="text-sm leading-[1.85] text-[var(--text-secondary)]">
-          {result.personality.communication}
-        </p>
-      </section>
-
-      {/* ─── §5 补充说明 ─── */}
-      <section className="report-section">
-        <h2 className="report-section-title">§5　补充说明</h2>
-        <hr className="report-rule" />
-        <ul className="space-y-2 list-none p-0 m-0">
-          {result.highlights.map((item) => (
-            <li key={item} className="text-sm text-[var(--text-secondary)] leading-relaxed flex gap-2">
-              <span className="text-[var(--text-muted)] shrink-0">—</span>
-              <span>{item}</span>
-            </li>
+      <section>
+        <h4 className="text-sm font-bold text-black border-b border-gray-200 pb-2 mb-4 uppercase tracking-widest">指标明细 / Details</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+          {Object.entries(modelGroups).map(([model, dims]) => (
+            <div key={model}>
+              <h5 className="text-xs font-bold text-gray-500 mb-2">{model.replace('模型', '')}</h5>
+              <div className="space-y-1.5">
+                {dims.map((dim) => (
+                  <div key={dim.dim} className="flex items-center justify-between py-1 border-b border-gray-100 last:border-0">
+                    <span className="text-xs font-medium text-gray-800">{shortName(dim.name)}</span>
+                    <span className="text-xs font-mono font-bold w-6 text-center rounded bg-gray-100" style={{ color: LEVEL_DOT[dim.level].color }}>
+                      {LEVEL_DOT[dim.level].label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           ))}
-        </ul>
-
-        {result.durationMs > 0 && (
-          <p className="mt-4 text-xs text-[var(--text-muted)] tabular-nums">
-            测试用时: {durationMin > 0 ? `${durationMin} 分 ` : ''}{durationSec} 秒
-          </p>
-        )}
+        </div>
       </section>
 
-      {/* ─── 报告页脚 ─── */}
-      <footer className="mt-12 pt-4 border-t border-[var(--border-rule)]">
-        <p className="text-[11px] text-[var(--text-caption)] text-center leading-relaxed">
-          SBTI 认知偏好评估系统 · 数据仅存储于本地浏览器 · 不构成任何专业心理学诊断
-        </p>
+      {/* 底部声明 */}
+      <footer className="mt-16 pt-6 border-t font-mono border-gray-200 text-center text-[10px] text-gray-400">
+        <p>This report is auto-generated by the IMSB Assessment System.</p>
+        <p>Valid exclusively for the assessed individual. Not intended for clinical diagnosis.</p>
+        <p className="mt-2">- EOF -</p>
       </footer>
     </article>
   );
 }
+
