@@ -145,7 +145,7 @@ export default function ResultCard({ result }: ResultCardProps) {
         <section>
           <h4 className="text-xs font-black text-black border-b-2 border-gray-200 pb-3 mb-6 uppercase tracking-[0.2em]">模型透视 / Radar Analysis</h4>
           <div className="h-72 w-full bg-gray-50/50 border border-gray-100 flex items-center justify-center p-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={280}>
               <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                 <PolarGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#4b5563', fontSize: 13, fontWeight: 700 }} />

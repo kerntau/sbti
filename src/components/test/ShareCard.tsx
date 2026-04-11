@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { TestResult } from '@/types';
 import { Download, Loader2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 interface ShareCardProps {
   result: TestResult;
@@ -19,14 +19,13 @@ export default function ShareCard({ result, onDownload }: ShareCardProps) {
     const timer = setTimeout(() => {
       const node = document.getElementById('result-report-card');
       if (node) {
-        html2canvas(node, {
-          scale: 2, // 视网膜高清度
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#e8e6e1', // matched with bg-page
+        toPng(node, {
+          pixelRatio: 2, // 对应 scale: 2
+          backgroundColor: '#ffffff',
+          skipAutoScale: true,
         })
-          .then((canvas) => {
-            setDataUrl(canvas.toDataURL('image/png'));
+          .then((dataUrl) => {
+            setDataUrl(dataUrl);
             setLoading(false);
           })
           .catch((err) => {
