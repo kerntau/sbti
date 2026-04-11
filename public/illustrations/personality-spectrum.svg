@@ -1,0 +1,41 @@
+<svg width="1200" height="960" viewBox="0 0 1200 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="960" rx="48" fill="#0F172A"/>
+  <rect x="60" y="60" width="1080" height="840" rx="36" fill="url(#panel)" stroke="rgba(255,255,255,0.16)"/>
+  <circle cx="225" cy="205" r="115" fill="#2563EB" fill-opacity="0.18"/>
+  <circle cx="950" cy="740" r="170" fill="#F97316" fill-opacity="0.14"/>
+  <circle cx="915" cy="220" r="92" fill="#38BDF8" fill-opacity="0.16"/>
+  <path d="M248 648C316 524 426 460 584 460C742 460 856 524 924 648" stroke="#93C5FD" stroke-width="16" stroke-linecap="round" stroke-opacity="0.92"/>
+  <path d="M326 598C370 530 452 496 572 496C692 496 782 532 838 610" stroke="#FDBA74" stroke-width="16" stroke-linecap="round" stroke-opacity="0.9"/>
+  <circle cx="390" cy="342" r="86" fill="#EFF6FF" fill-opacity="0.98"/>
+  <circle cx="814" cy="338" r="86" fill="#EFF6FF" fill-opacity="0.98"/>
+  <path d="M350 334C350 308 371 287 397 287H430C456 287 477 308 477 334V385C477 412 456 433 430 433H397C371 433 350 412 350 385V334Z" fill="#2563EB" fill-opacity="0.12"/>
+  <path d="M774 334C774 308 795 287 821 287H854C880 287 901 308 901 334V385C901 412 880 433 854 433H821C795 433 774 412 774 385V334Z" fill="#F97316" fill-opacity="0.14"/>
+  <circle cx="413" cy="333" r="18" fill="#2563EB"/>
+  <circle cx="837" cy="333" r="18" fill="#F97316"/>
+  <path d="M370 397C393 419 434 421 459 399" stroke="#1E293B" stroke-width="10" stroke-linecap="round"/>
+  <path d="M796 392C824 424 866 424 892 392" stroke="#1E293B" stroke-width="10" stroke-linecap="round"/>
+  <rect x="470" y="132" width="266" height="116" rx="28" fill="#0F172A" fill-opacity="0.72" stroke="#334155"/>
+  <text x="603" y="188" text-anchor="middle" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="34" font-weight="700">SBTI</text>
+  <text x="603" y="224" text-anchor="middle" fill="#93C5FD" font-family="Arial, sans-serif" font-size="20">人格能量光谱</text>
+  <g opacity="0.92">
+    <rect x="184" y="728" width="240" height="84" rx="24" fill="#0F172A" stroke="#334155"/>
+    <text x="304" y="768" text-anchor="middle" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="28" font-weight="700">外向 / 内向</text>
+    <text x="304" y="795" text-anchor="middle" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">看你怎么充电</text>
+  </g>
+  <g opacity="0.92">
+    <rect x="478" y="728" width="240" height="84" rx="24" fill="#0F172A" stroke="#334155"/>
+    <text x="598" y="768" text-anchor="middle" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="28" font-weight="700">直觉 / 实感</text>
+    <text x="598" y="795" text-anchor="middle" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">看你怎么接收信息</text>
+  </g>
+  <g opacity="0.92">
+    <rect x="772" y="728" width="240" height="84" rx="24" fill="#0F172A" stroke="#334155"/>
+    <text x="892" y="768" text-anchor="middle" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="28" font-weight="700">理性 / 感性</text>
+    <text x="892" y="795" text-anchor="middle" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">看你怎么做决定</text>
+  </g>
+  <defs>
+    <linearGradient id="panel" x1="110" y1="110" x2="1080" y2="850" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111827"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
+</svg>

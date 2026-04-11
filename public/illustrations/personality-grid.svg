@@ -1,0 +1,28 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="40" fill="#E2E8F0"/>
+  <rect x="70" y="70" width="1060" height="660" rx="32" fill="#F8FAFC"/>
+  <rect x="150" y="150" width="250" height="210" rx="28" fill="#DBEAFE"/>
+  <rect x="475" y="150" width="250" height="210" rx="28" fill="#FFEDD5"/>
+  <rect x="800" y="150" width="250" height="210" rx="28" fill="#DCFCE7"/>
+  <rect x="150" y="430" width="250" height="210" rx="28" fill="#F5D0FE"/>
+  <rect x="475" y="430" width="250" height="210" rx="28" fill="#FDE68A"/>
+  <rect x="800" y="430" width="250" height="210" rx="28" fill="#BFDBFE"/>
+  <circle cx="275" cy="255" r="44" fill="#2563EB" fill-opacity="0.12"/>
+  <circle cx="600" cy="255" r="44" fill="#F97316" fill-opacity="0.12"/>
+  <circle cx="925" cy="255" r="44" fill="#16A34A" fill-opacity="0.12"/>
+  <circle cx="275" cy="535" r="44" fill="#A21CAF" fill-opacity="0.12"/>
+  <circle cx="600" cy="535" r="44" fill="#CA8A04" fill-opacity="0.12"/>
+  <circle cx="925" cy="535" r="44" fill="#0EA5E9" fill-opacity="0.12"/>
+  <text x="190" y="250" fill="#0F172A" font-family="Arial, sans-serif" font-size="40" font-weight="700">E / I</text>
+  <text x="190" y="300" fill="#334155" font-family="Arial, sans-serif" font-size="24">能量方向</text>
+  <text x="515" y="250" fill="#0F172A" font-family="Arial, sans-serif" font-size="40" font-weight="700">N / S</text>
+  <text x="515" y="300" fill="#334155" font-family="Arial, sans-serif" font-size="24">信息偏好</text>
+  <text x="840" y="250" fill="#0F172A" font-family="Arial, sans-serif" font-size="40" font-weight="700">T / F</text>
+  <text x="840" y="300" fill="#334155" font-family="Arial, sans-serif" font-size="24">决策习惯</text>
+  <text x="190" y="530" fill="#0F172A" font-family="Arial, sans-serif" font-size="40" font-weight="700">J / P</text>
+  <text x="190" y="580" fill="#334155" font-family="Arial, sans-serif" font-size="24">行动节奏</text>
+  <text x="515" y="530" fill="#0F172A" font-family="Arial, sans-serif" font-size="40" font-weight="700">28 题</text>
+  <text x="515" y="580" fill="#334155" font-family="Arial, sans-serif" font-size="24">大约 5 分钟</text>
+  <text x="840" y="530" fill="#0F172A" font-family="Arial, sans-serif" font-size="40" font-weight="700">16 型</text>
+  <text x="840" y="580" fill="#334155" font-family="Arial, sans-serif" font-size="24">结果可分享</text>
+</svg>
