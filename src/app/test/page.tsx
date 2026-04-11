@@ -155,7 +155,7 @@ function TestContent() {
       </header>
 
       <div className="relative mx-auto max-w-5xl px-4 md:px-8 pb-12 pt-8">
-        <ProgressBar current={activeSession.currentIndex} total={TOTAL} answered={answeredCount} />
+        <ProgressBar total={TOTAL} answered={answeredCount} />
 
         <div className="tarot-card mt-10 p-5 md:p-6 mb-10 overflow-visible">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">

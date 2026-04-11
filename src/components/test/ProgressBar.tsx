@@ -3,12 +3,11 @@
 import { motion } from 'framer-motion';
 
 interface ProgressBarProps {
-  current: number;
   total: number;
   answered: number;
 }
 
-export default function ProgressBar({ current, total, answered }: ProgressBarProps) {
+export default function ProgressBar({ total, answered }: ProgressBarProps) {
   const progress = Math.min(100, Math.max(0, (answered / total) * 100));
 
   return (
